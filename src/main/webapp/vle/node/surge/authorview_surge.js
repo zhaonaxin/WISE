@@ -192,7 +192,7 @@ View.prototype.SurgeNode.generatePage = function(view){
 	var authoringSwfHtml = '<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0" width="770" height="480" id="leveleditor" align="middle">'
 	+ '<param name="allowScriptAccess" value="sameDomain" />'
 	+ '<param name="allowFullScreen" value="false" />'
-	+ '<param name="movie" value="leveleditor.swf" /><param name="quality" value="high" /><param name="bgcolor" value="#ffffff" />	<embed src="/wise/vle/node/surge/leveleditor.swf" quality="high" bgcolor="#ffffff" width="770" height="480" name="leveleditor" align="middle" allowScriptAccess="sameDomain" allowFullScreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />'
+	+ '<param name="movie" value="/vlewrapper/vle/node/surge/leveleditor.swf" /><param name="quality" value="high" /><param name="bgcolor" value="#ffffff" />	<embed src="/vlewrapper/vle/node/surge/leveleditor.swf" quality="high" bgcolor="#ffffff" width="770" height="480" name="leveleditor" align="middle" allowScriptAccess="sameDomain" allowFullScreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />'
 	+ '</object>';
 	
 	$('#authoringSwfDiv').html(authoringSwfHtml);
@@ -349,9 +349,9 @@ View.prototype.SurgeNode.updateDimensions = function(){
  * Open asset editor dialog and allows user to choose the swf to use for this step
  */
 View.prototype.SurgeNode.browseFlashAssets = function() {
-	var callback = function(field_name, url, type, win){
+	var callback = function(url,params){
 		url = 'assets/' + url;
-		document.getElementById(field_name).value = url;
+		document.getElementById(params.field_name).value = url;
 		
 		//fire swfUrlChanged event
 		this.eventManager.fire('surgeSwfUrlChanged');
@@ -359,9 +359,7 @@ View.prototype.SurgeNode.browseFlashAssets = function() {
 	var params = {};
 	params.field_name = 'swfUrlInput';
 	params.type = 'flash';
-	params.buttonText = 'Please select a file from the list.';
-	params.extensions = ['swf', 'flv'];
-	params.win = null;
+	params.extensions = ['swf'];
 	params.callback = callback;
 	eventManager.fire('viewAssets',params);
 };

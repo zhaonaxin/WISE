@@ -48,8 +48,8 @@ var scriptloader = function(){
 	var scriptLoaderWait = 30000;
 	var callerId;
 	var loaded = [];
-	var jquerySrc = 'vle/jquery/js/jquery-1.9.1.min.js';
-	var jqueryUISrc = 'vle/jquery/js/jquery-ui-1.10.0.custom.min.js';
+	var jquerySrc = 'vle/jquery/js/jquery-1.10.2.min.js';
+	var jqueryUISrc = 'vle/jquery/js/jquery-ui-1.10.3.custom.min.js';
 	var jqueryUICss = 'vle/jquery/css/wise-theme/jquery-ui-1.10.0.custom.css';
 	
 	/**
@@ -151,6 +151,8 @@ var scriptloader = function(){
 					}
 					
 					// check if i18n is enabled for theme, add theme_i18n.js to scripts if enabled
+					//if(data.i18n_enabled){
+					// TODO: remove, deprecated (also remove theme_i18n.js file from theme directories)
 					//if(data.i18n_enabled){
 						//var i18n_js = 'vle/' + themepath + 'i18n/theme_i18n.js';
 						//s.push(i18n_js);
@@ -329,12 +331,16 @@ var scriptloader = function(){
         bootstrap: ['vle/util/componentloader.js',
                   jquerySrc,
     		      jqueryUISrc,
-                  'vle/view/view.js',
+    		      'vle/util/modernizr.custom.js',
+  		          'vle/jquery/js/jquery.ui.touch-punch.min.js',
+  		          'vle/jquery/js/jquery-migrate-1.2.1.min.js', // TODO: remove when all instances of jQuery.browser are removed from VLE
+  		          'vle/view/view.js',
                   'vle/node/nodefactory.js',
                   'vle/environment/environment.js',
-  		          'vle/jquery/js/jquery-migrate-1.2.1.min.js', // TODO: remove when all instances of jQuery.browser are removed from VLE
-  		          'vle/jquery/js/jsonplugin.js',
-  		          'vle/jquery/js/jqueryhelper.js',
+                  'vle/jquery/js/jquery-migrate-1.2.1.min.js', // TODO: remove when all instances of jQuery.browser are removed from VLE
+                  'vle/jquery/js/jsonplugin.js',
+                  'vle/jquery/js/jqueryhelper.js',
+                  'vle/jquery/js/jquery.ui.touch-punch.min.js',
  			      'vle/node/Node.js',
  			      //'vle/node/DuplicateNode.js', 
   		          'vle/node/setupNodes.js',
@@ -392,17 +398,29 @@ var scriptloader = function(){
 			      'vle/view/vle/vleview_utils.js',
 			      'vle/view/vle/vleview_studentwork.js',
 			      'vle/view/vle/vleview_model.js',
+	              'vle/util/swfobject/swfobject.js',
 			      'vle/view/vle/vleview_globaltagmaps.js',
-			      'vle/navigation/GlobalTagMap.js',
-	              'vle/swfobject/swfobject.js'],
+			      'vle/navigation/GlobalTagMap.js'],
         author: ['vle/util/icon.js',
                  'vle/jquery/tinymce/jscripts/tiny_mce/jquery.tinymce.js',
-                 'vle/jquery/miniTip/jquery.miniTip.min.js',
+                 'vle/jquery/jquery-tipTip/jquery.tipTip.minified.js',
+                 'vle/jquery/jquery-toggleSwitch/jquery.toggleSwitch.min.js',
                  'vle/jquery/jquery-validation/jquery.validate.min.js',
+                 'vle/util/moment.min.js',
+                 'vle/util/swfobject/swfobject.js',
+                 //'vle/jquery/colResizable-1.3.min.js',
+                 'vle/jquery/jquery-dataTables/media/js/jquery.dataTables.min.js',
+                 'vle/jquery/jquery-dataTables/media/js/dataTables.util.js',
+                 'vle/jquery/jquery-dataTables/extras/FixedHeader/js/FixedHeader.min.js',
+                 'vle/util/mediaelement/build/mediaelement-and-player.min.js', // TODO: add to vle/grading eventually?
+                 'vle/util/plupload/js/plupload.js',
+                 'vle/util/plupload/js/plupload.html4.js',
+                 'vle/util/plupload/js/plupload.html5.js',
                  'vle/view/authoring/authorview_dispatchers.js',
                  'vle/view/authoring/authorview_startup.js',
                  'vle/view/authoring/authorview_main.js',
                  'vle/view/authoring/authorview_dialog.js',
+                 'vle/view/authoring/authorview_assets.js',
                  'vle/view/authoring/authorview_meta.js',
                  'vle/view/authoring/authorview_selection.js',
                  'vle/view/authoring/authorview_utils.js',
@@ -431,12 +449,12 @@ var scriptloader = function(){
 	              'vle/view/grading/gradingview_studentwork.js',
 	              'vle/view/grading/gradingview_classroommonitor.js',
 	              'vle/jquery/js/jquery.tablesorter.min.js', // TODO: remove when all references are removed
-	              'vle/jquery/jquery-dataTables/js/jquery.dataTables.min.js',
+	              'vle/jquery/jquery-dataTables/media/js/jquery.dataTables.min.js',
 	              'vle/jquery/jquery-dataTables/extras/FixedHeader/js/FixedHeader.min.js',
 	              'vle/view/grading/gradingview_premadecomments.js',
 	              'vle/jquery/js/jquery.editinplace.js',
 	              'vle/view/grading/gradingview_model.js',
-	              'vle/swfobject/swfobject.js'],
+	              'vle/util/swfobject/swfobject.js'],
 	    studentWebSocket: ['vle/webSocket/studentWebSocket.js'],
 	    teacherWebSocket: ['vle/webSocket/teacherWebSocket.js',
 	                       'vle/view/classroomMonitor/classroomMonitorView_model.js',
@@ -450,6 +468,12 @@ var scriptloader = function(){
 		shortcuts: ['vle/util/shortcutmanager.js'],
 		ddMenu: ['vle/common/dropdown.js'],
 		topMenu: ['vle/view/vle/vleview_topmenu.js'],
+		vle: ['vle/util/icon.js',
+		      'vle/jquery/jquery-validation/jquery.validate.min.js',
+		      'vle/view/vle/vleview_core.js',
+		      'vle/view/vle/vleview_utils.js',
+		      'vle/view/vle/vleview_studentwork.js',
+              'vle/util/swfobject/swfobject.js'],
 		studentwork: ['vle/data/vlestate.js',
 		              'vle/data/nodevisit.js'
 		              ],
@@ -504,9 +528,13 @@ var scriptloader = function(){
 		bootstrap_min:["vle/css/globalstyles.css"],
 		core: [/*'vle/css/message.css'*/],
 		core_min: [/*'vle/css/message.css'*/],
-		author: ['vle/css/authoring/authoring.css',
+		author: [/*'vle/css/authoring/authoring.css',*/
+		         'vle/css/authoring/author.css',
 		         'vle/css/ui-tools.css',
-		         'vle/jquery/miniTip/miniTip.css',
+		         'vle/jquery/jquery-tipTip/tipTip.css',
+		         'vle/jquery/jquery-toggleSwitch/jquery.toggleSwitch.css',
+		         'vle/jquery/jquery-dataTables/media/css/datatable.css',
+		         'vle/util/mediaelement/build/mediaelementplayer.css', // TODO: add to vle/grading eventually?
 		         jqueryUICss
 		         ],
 		//wise: ["vle/css/wise/WISE_styles.css"],
@@ -515,16 +543,15 @@ var scriptloader = function(){
     	navigation:[/*"vle/css/navigation.css"*/],
     	menu:[/*"vle/css/sdmenu.css"*/],
  		grading: ['vle/css/portal/teachergrading.css',
- 		         'vle/jquery/jquery-dataTables/css/datatable.css',
+ 		         'vle/jquery/jquery-dataTables/media/css/datatable.css',
  		         jqueryUICss],
  		grading_min: ['vle/css/portal/teachergrading.css',
- 	 		         'vle/jquery/jquery-dataTables/css/datatable.css',
+ 	 		         'vle/jquery/jquery-dataTables/media/css/datatable.css',
  	 		         jqueryUICss],
  		ideabasket: ['vle/css/ideaManager/jquery-validate/cmxformTemplate.css'],
  		premadecomments:['vle/css/globalstyles.css',
  		                 'vle/css/premadecomments/premadecomments.css',
- 		                jqueryUICss],
-    	         
+ 		                jqueryUICss]
 	};
 	
 	/**
@@ -549,9 +576,16 @@ var scriptloader = function(){
         'vle/jquery/js/jquery.form.js':[jquerySrc],
         'vle/jquery/js/jquery.tablesorter.min.js':[jquerySrc],
         'vle/jquery/jquery-validation/jquery.validate.min.js':[jquerySrc],
-        'vle/jquery/miniTip/jquery.miniTip.min.js':[jquerySrc],
         'vle/jquery/js/jquery.editinplace.js':[jquerySrc],
+        'vle/jquery/js/jquery.ui.touch-punch.min.js':[jqueryUISrc],
+        'vle/jquery/jquery-tipTip/jquery.tipTip.minified.js':[jquerySrc],
+        'vle/jquery/jquery-toggleSwitch/jquery.toggleSwitch.min.js':[jquerySrc],
+        'vle/jquery/js/jquery.ui.touch-punch.min.js':[jqueryUISrc],
+        'vle/jquery/jquery-dataTables/media/js/jquery.dataTables.min.js':[jquerySrc],
+        'vle/jquery/jquery-dataTables/media/js/dataTables.util.js':['vle/jquery/jquery-dataTables/media/js/jquery.dataTables.min.js'],
+        'vle/jquery/jquery-dataTables/extras/FixedHeader/js/FixedHeader.min.js':['vle/jquery/jquery-dataTables/media/js/jquery.dataTables.min.js'],
         'vle/jquery/js/jquery-migrate-1.2.1.min.js':[jquerySrc],
+        'vle/jquery/js/jquery.ui.touch-punch.min.js':[jqueryUISrc],
         'vle/navigation/constraints/nonvisitablexconstraint.js':['vle/navigation/constraints/constraint.js'],
         'vle/navigation/constraints/visitxafteryconstraint.js':['vle/navigation/constraints/constraint.js'],
         'vle/navigation/constraints/visitxbeforeyconstraint.js':['vle/navigation/constraints/constraint.js'],
@@ -563,6 +597,8 @@ var scriptloader = function(){
         'vle/xmpp/js/student.js':['vle/xmpp/js/sail.js/sail.js','vle/xmpp/js/sail.js/sail.strophe.js'],
         'vle/xmpp/js/teacher.js':['vle/xmpp/js/sail.js/sail.js','vle/xmpp/js/sail.js/sail.strophe.js'],
         'vle/view/authoring/authorview_startup.js':['vle/view/i18n/view_i18n.js'],
+        'vle/util/plupload/js/plupload.html4.js':['vle/util/plupload/js/plupload.js'],
+        'vle/util/plupload/js/plupload.html5.js':['vle/util/plupload/js/plupload.js'],
         'vle/navigation/tagmapconstraints/MustCompleteBeforeAdvancingConstraint.js':['vle/navigation/tagmapconstraints/TagMapConstraint.js'],
         'vle/navigation/tagmapconstraints/MustCompleteBeforeExitingConstraint.js':['vle/navigation/tagmapconstraints/TagMapConstraint.js'],
         'vle/navigation/tagmapconstraints/MustCompleteXBeforeConstraint.js':['vle/navigation/tagmapconstraints/TagMapConstraint.js'],
@@ -861,6 +897,9 @@ var scriptloader = function(){
 			 * so we will load all step types
 			 */
 			
+			// check if we are loading the authoring tool
+			var isAuthoring = (document.location.pathname.indexOf('authorproject.html') != -1) ? true : false;
+			
 			//loop through all the setup objects
 			for(var x=0; x<setupFiles.length; x++) {
 				//get a setup object
@@ -871,6 +910,10 @@ var scriptloader = function(){
 				
 				//add the path into the setup component
 				scriptloader.addScriptToComponent('setup', nodeSetupPath);
+				
+				if(isAuthoring){
+					// we're loading the authoring tool, so get node's 
+				}
 			}
 		}
 	};

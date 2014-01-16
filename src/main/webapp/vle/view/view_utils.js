@@ -136,11 +136,11 @@ View.prototype.utils.containsApplet = function(content){
  */
 View.prototype.utils.appropriateSizeText = function(bytes){
 	if(bytes>1048576){
-		return this.roundToDecimal(((bytes/1024)/1024), 1) + ' mb';
-	} else if(bytes>1024){
-		return this.roundToDecimal((bytes/1024), 1) + ' kb';
-	} else {
-		return bytes + ' b';
+		return this.roundToDecimal(((bytes/1024)/1024), 1) + ' MB';
+	} else /*if(bytes>1024)*/{
+		return this.roundToDecimal((bytes/1024), 0) + ' KB';
+	//} else {
+		//return bytes + ' b';
 	};
 };
 
@@ -1217,89 +1217,127 @@ View.prototype.getAnnotationsByType = function(annotationType) {
 };
 
 /*
- * Finds any DOM elements with the 'tooltip' class and initializes the miniTip plugin on each.
+ * Finds any DOM elements with the 'tooltip' class and initializes the tipTip (modified) plugin on each.
  * 
- * @param options An object to specify default miniTip settings for all tooltips (Optional; 
- * see http://goldfirestudios.com/blog/81/miniTip-jQuery-Plugin for allowable options)
+ * @param target A jQuery DOM object on which to process elements (Optional; default is entire page)
+ * @param options An object to specify default tipTip settings for all tooltips (Optional; 
+ * see https://github.com/indyone/TipTip for allowable options)
  * 
- * Individual tooltip options can be customized by adding additional attributes to the target DOM 
- * element (Optional; will override default settings):
- * - tooltip-event:'click' sets the tooltip to render on mouse click (vs. hover, which is the default)
- * - tooltip-anchor:'bottom', 'left', and 'right' set the positions of the tooltip to bottom, left, 
- * and right respectively (default is top)
- * - tooltip-maxW:'XXXpx' sets the max-width of the tooltip element to XXX pixels (default is '250px');
+ * Individual tooltip options can be customized by adding jQuery data fields or HTML5 data-* attributes 
+ * to the DOM element 
+ * (Optional; will override default settings):
+ * - tooltip-event: 'hover', 'click', 'focus', and 'manual' set the tooltip to show on mouse click,
+ * mouse hover, element focus, and manual activation [via $('#element').tipTip.('show')] respectively
+ * (default is 'hover')
+ * - tooltip-anchor: 'bottom', 'top', 'left', and 'right' set the positions of the tooltip to bottom, top, left, 
+ * and right respectively (default is 'top')
+ * - tooltip-maxw: 'X' sets the max-width of the tooltip element (accepts any valid css 'max-width' value, e.g 
+ * '100px', '50%', 'auto'; default is '400px');
  * - tooltip-content: String (or HTML String) to set as the tooltip's content (default is the element's 
  * title attribute)
- * - tooltip-title: String to set as the tooltip's title (default is no title)
+ * - tooltip-title: String (or inline HTML) to set as the tooltip's title (this will prepend an h3 element
+ * to the tooltip content)
  * - tooltip-class: String to add to the tooltip element's css class (default is none)
+ * - tooltip-offset: 'X' sets the offset of the tooltip element to X pixels (default is '2')
+ * - tooltip-delay: 'X' sets the appearance delay of the tooltip element to X milliseconds (default is '200')
+ * - tooltip-keep: String ('true' or 'false') to specify whether the tooltip should stay visible when mouse
+ * moves away from the element (and hide when the mouse leaves the tooltip or the user clicks on another
+ * part of the page) (default is 'false')
  */
-View.prototype.insertTooltips = function(options){
-	// for all DOM elements with the 'tooltip' class, initialize miniTip
-	$('.tooltip').each(function(){
-		// set miniTip default options
-		var settings = {};
+View.prototype.insertTooltips = function(target,options){
+	function processElement(item,options){
+		item.css('cursor','pointer');
+		
+		// set tipTip default options
+		var settings = {
+			defaultPosition:'top',
+			maxWidth:'400px',
+			edgeOffset:2,
+			fadeIn:100,
+			fadOut:100,
+			delay:100
+		};
 		if(options != null && typeof options == 'object'){
-			// options have been sent in as a parameter
-			settings = options;
-		} else {
-			// options have not been sent in as a paremeter, so set them 
-			settings = {
-				anchor:'n',
-				event:'hover',
-				aHide:false,
-				maxW:'250px',
-				fadeIn:10,
-				fadOut:10,
-				delay:100,
-				show: function(){},
-				hide: function(){}
-			};
+			// tipTip options have been sent in as a parameter, so merge with defaults
+			$.extend(settings,options);
 		}
 		
 		// set options based on target element attributes
-		if($(this).attr('tooltip-event') == 'click'){
-			settings.event = 'click';
+		if(item.data('tooltip-event') == 'click' || jQuery.browser.mobile){ // if using a mobile browser, always set activation to 'click' (mobile browsers don't support hover events well)
+			settings['activation'] = 'click';
+			settings['keepAlive'] = true; // if activation is set to click, always keep tip alive
+		} else if(item.data('tooltip-event') == 'hover'){
+			settings['activation'] = 'hover';
+		} else if(item.data('tooltip-event') == 'manual'){
+			settings['activation'] = 'manual';
 		}
-		if($(this).attr('tooltip-anchor') == 'right'){
-			settings.anchor = 'e';
-		} else if ($(this).attr('tooltip-anchor') == 'bottom'){
-			settings.anchor = 's';
-		} else if ($(this).attr('tooltip-anchor') == 'left'){
-			settings.anchor = 'w';
+		if(item.data('tooltip-anchor') == 'right'){
+			settings['defaultPosition'] = 'right';
+		} else if (item.data('tooltip-anchor') == 'bottom'){
+			settings['defaultPosition'] = 'bottom';
+		} else if (item.data('tooltip-anchor') == 'left'){
+			settings['defaultPosition'] = 'left';
+		} else if (item.data('tooltip-anchor') == 'top'){
+			settings['defaultPosition'] = 'top';
 		}
-		if($(this).attr('tooltip-maxW') && $(this).attr('tooltip-maxW').match(/^[0-9]+px$/)){
-			settings.maxW = $(this).attr('tooltip-maxW');
+		if(typeof item.data('tooltip-maxw') == 'string'){
+			settings['maxWidth'] = item.data('tooltip-maxw');
 		}
-		if(typeof $(this).attr('tooltip-content') == 'string'){
-			settings['content'] = $(this).attr('tooltip-content');
+		if(typeof item.data('tooltip-content') == 'string'){
+			settings['content'] = item.data('tooltip-content');
 		}
-		if(typeof $(this).attr('tooltip-title') == 'string'){
-			settings['title'] = $(this).attr('tooltip-title');
+		if(typeof item.data('tooltip-offset') == 'string'){
+			settings['edgeOffset'] = parseInt(item.data('tooltip-offset'));
 		}
-		if(typeof $(this).attr('tooltip-class') == 'string'){
-			var doShow = settings.show, doHide = settings.hide;
-			settings.show = function(){
-				$('#miniTip').addClass($(this).attr('tooltip-class'));
-				doShow();
-			};
-			settings.hide = function(){
-				setTimeout(function(){$('#miniTip').removeClass($(this).attr('tooltip-class'));},200);
-				doHide();
-			};
-		} else {
-			var doShow = settings.show;
-			settings.show = function(){
-				$('#miniTip').attr('class','');
-				doShow();
-			};
+		if(typeof item.data('tooltip-class') == 'string'){
+			settings['cssClass'] = item.data('tooltip-class');
+		}
+		if(typeof item.data('tooltip-delay') == 'string'){
+			var delay = parseInt(item.data('tooltip-delay'));
+			if(delay != 'NaN'){
+				settings['delay'] = delay;
+			}
+		}
+		if(typeof item.data('tooltip-keep') == 'string'){
+			if (item.data('tooltip-keep') == 'true'){
+				settings['keepAlive'] = true;
+			} else if (item.data('tooltip-keep') == 'false'){
+				settings['keepAlive'] = false;
+			}
 		}
 		
-		// initialize miniTip on element
-		$(this).miniTip(settings);
+		// prevent the title from showing on hover when activation is set to 'click', 'focus', or 'manual'
+		if(item.attr('title') && item.attr('title') != '' && !settings.content){
+			// if title is set and content is not, set content to title value and remove title
+			settings.content = item.attr('title');
+			item.removeAttr('title');
+		}
+		
+		if(typeof item.data('tooltip-title') == 'string'){
+			settings['content'] = '<h3>' + item.data('tooltip-title') + '</h3>' + settings['content'];
+		}
+		
+		// initialize tipTip on element
+		item.tipTip(settings);
 		
 		// remove all tooltip attributes and class from DOM element (to clean up html and so item are not re-processed if insertTooltips is called again on same page)
-		$(this).removeAttr('tooltip-event').removeAttr('tooltip-anchor').removeAttr('tooltip-maxW').removeAttr('tooltip-content').removeAttr('tooltip-title').removeClass('tooltip');
-	});
+		item.removeAttr('data-tooltip-event').removeAttr('data-tooltip-anchor').removeAttr('data-tooltip-maxw').removeAttr('data-tooltip-content').removeAttr('data-tooltip-class').removeAttr('data-tooltip-offset').removeAttr('data-tooltip-keep').removeAttr('data-tooltip-delay').removeClass('tooltip');
+	}
+	
+	// for all DOM elements with the 'tooltip' class, initialize tipTip
+	if(target){
+		if(target.hasClass('tooltip')){
+			processElement(target,options);
+		} else {
+			$('.tooltip',target).each(function(){
+				processElement($(this),options);
+			});
+		}
+	} else {
+		$('.tooltip').each(function(){
+			processElement($(this),options);
+		});
+	}
 };
 
 /**
@@ -1403,6 +1441,8 @@ View.prototype.utils.capitalize = function(string) {
  * Generates and returns a random key of the given length if
  * specified. If length is not specified, returns a key 10
  * characters in length.
+ * 
+ * @param length Integer
  */
 View.prototype.utils.generateKey = function(length){
 	this.CHARS = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r", "s","t",
@@ -1425,10 +1465,30 @@ View.prototype.utils.generateKey = function(length){
 };
 
 /**
+ * Given a nodeType, returns the readable node name (as specified in a node's 
+ * authoringToolName variable.
+ * 
+ * @param nodeType String
+ */
+View.prototype.utils.getAuthoringNodeName = function(nodeType){
+	var nodeName = '';
+	// get all the node constructors
+	var nodeConstructors = NodeFactory.nodeConstructors;
+	var constructor = nodeConstructors[nodeType];
+	
+	// check if there is a constructor
+	if(constructor != null) {
+		// get the readable name of the node
+		nodeName = constructor.authoringToolName;
+	}
+	return nodeName;
+};
+
+/**
  * Given an image url, calculates and returns the height and width of the image in pixels.
  * Modified from: http://stackoverflow.com/questions/106828/javascript-get-image-height/952185#952185
  * @param url String identifying the url of an image file
- * @returns dimensions Object specifying height and width of the image file (defaults to 0, 0)
+ * @param callback Function to execute when dimensions have been found
  */
 View.prototype.utils.getImageDimensions = function(url,callback){
 	var dimensions = {
@@ -1455,6 +1515,85 @@ View.prototype.utils.getImageDimensions = function(url,callback){
 };
 
 /**
+ * Given a swf url, calculates and returns the height and width of the swf in pixels.
+ * With help from: http://stackoverflow.com/questions/7710799/load-timer-on-swfobject-for-swf-load-time
+ * @param url String identifying the url of an swf file
+ * @param callback Function to execute when dimensions have been found
+ */
+View.prototype.utils.getSwfDimensions = function(url,callback){
+	// TODO: accomplish by loading swf in a helper swf that loads the file and sends dimensions to browser via ExternalInterface
+};
+
+/**
+ * If jQuery dialog height is larger than window height, adjusts dialog to fit window (with
+ * 30px padding on top and bottom)
+ * @param element DOM element of jQuery dialog
+ */
+View.prototype.utils.adjustDialogHeight = function(element){
+	var winH = $(window).height()-30,
+		minH = $(element).dialog("option","minHeight");
+	
+	// if window height is larger than dialog's minHeight option, resize to fit window height
+	// otherwise, do not resize because minHeight option should take precedent
+	if(winH > minH && $(element).parent().height() > winH){
+		$(element).dialog('option','height', winH);
+    	$(element).scrollTop(0);
+	    
+		if($(element).dialog("option","modal") === true){
+			// resize jQuery widget overlay to fit window dimensions
+		    $('.ui-widget-overlay').height('100%').width('100%');
+		}
+	    
+	    // re-center dialog 
+		$(element).dialog('option','position','center');
+	}
+};
+
+/**
+ * Adjusts jQuery dialog dimensions to fit window (with small padding on each side)
+ * @param element DOM element of jQuery dialog
+ */
+View.prototype.utils.fitDialogToWindow = function(element){
+	var winH = $(window).height()-12,
+		winW = $(window).width()-6;
+	
+	$(element).dialog('option','height', winH);
+	$(element).dialog('option','width', winW);
+	$(element).scrollTop(0);
+	
+	if($(element).dialog("option","modal") === true){
+		// resize jQuery widget overlay to fit window dimensions
+	    $('.ui-widget-overlay').height('100%').width('100%');
+	}
+	    
+    // re-center dialog 
+    $(element).dialog('option','position','center');
+};
+
+/**
+ * Given a string, escapes : and . characters and returns the escaped string.
+ * @param selector String
+ * @returns String
+ * 
+ * Since jQuery uses CSS syntax for selecting elements, escaping CSS notation characters is necessary 
+ * when using jQuery to select elements that contain them.
+ * See: http://docs.jquery.com/Frequently_Asked_Questions#How_do_I_select_an_element_by_an_ID_that_has_characters_used_in_CSS_notation.3F
+ */
+View.prototype.jquerySelectorEscape = function(selector){
+	return selector.replace(/(:|\.)/g,'\\$1');
+};
+
+/**
+ * jQuery.browser.mobile (http://detectmobilebrowser.com/)
+ *
+ * jQuery.browser.mobile will be true if the browser is a mobile device
+ * 
+ * TODO: remove, as this has been deprecated in jQuery
+ *
+ **/
+(function(a){jQuery.browser.mobile=/android.+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|meego.+mobile|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(di|rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))})(navigator.userAgent||navigator.vendor||window.opera);
+
+/**
  * Blocks out the UI and displays a message
  * @param message the message to display 
  */
@@ -1464,6 +1603,7 @@ View.prototype.blockUI = function(message) {
 
 /**
  * Used in Show My Work for draw steps
+ * TODO: move
  */
 function enlargeDraw(divId){
 	//get the context path e.g. /wise

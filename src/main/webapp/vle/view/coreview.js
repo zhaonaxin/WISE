@@ -66,8 +66,8 @@ View.prototype.loadProject = function(url, contentBase, lazyLoading){
 			var project = createProject(createContent(url), contentBase, lazyLoading, view);
 			view.setProject(project);
 			view.isLoadedProjectMinified = false;
-			$('#currentProjectContainer').show();
-			$('#authoringContainer').show();
+			//$('#currentProjectContainer').show();
+			//$('#authoringContainer').show();
 			eventManager.fire('loadingProjectCompleted');
 		};
 	};

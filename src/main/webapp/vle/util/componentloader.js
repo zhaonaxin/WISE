@@ -254,7 +254,7 @@ var componentloader = function(em, sl){
 				disambiguateMode:false, 
 				selectOrigSeqs:undefined, 
 				selectOrigNodes:undefined, 
-				simpleProject:true,
+				simpleProject:false,
 				projectStructureViolation:false, 
 				pathSeparator:undefined, 
 				selectedType:undefined,
@@ -264,10 +264,20 @@ var componentloader = function(em, sl){
 				portalProjectPaths:[], 
 				portalProjectIds:[], 
 				portalProjectTitles:[],
+				portalFavorites:0,
 				portalProjectId:undefined, 
 				portalCurriculumBaseDir:undefined, 
 				excludedPrevWorkNodes:['HtmlNode', 'OutsideUrlNode', 'MySystemNode', 'SVGDrawNode', 'MWNode', 'DrawNode','DuplicateNode'], 
-				allowedAssetExtensions:['txt', 'jpg', 'jpeg', 'gif', 'png', 'swf', 'flv', 'bmp', 'tif', 'pdf', 'nlogo', 'nls', 'jar', 'cml', 'mml', 'otml', 'mov', 'mp4', 'mp3', 'wav', 'aac', 'avi', 'wmv', 'mpg', 'mpeg', 'ogg', 'css'],
+				allowedAssetExtensions:['png', 'jpg', 'jpeg', 'gif', 'bmp', 'tif', 'mp4', 'webm', 'ogg', 'ogv', 'm4v', 'mpg', 'mpeg', 'mov', 'avi', 'wmv', 'mp3', 'm4a', 'oga', 'aac', 'wav', 'swf', 'flv', 'f4v', 'pdf', 'nlogo', 'nls', 'jar', 'cml', 'mml', 'otml', 'css'],
+				allowedAssetExtensionsByType:{
+					image:['png', 'jpg', 'jpeg', 'gif', 'bmp', 'tif'],
+					video:['mp4', 'webm', 'ogg', 'ogv', 'm4v', 'mpg', 'mpeg', 'mov', 'avi', 'wmv'],
+					audio:['mp3', 'm4a', 'oga', 'aac', 'wav'],
+					flash:['swf'],
+					flashvideo:['flv', 'f4v'],
+					java:['nlogo', 'nls', 'jar', 'cml', 'mml', 'otml'],
+					misc:['pdf', 'css']
+				},
 				MAX_ASSET_SIZE:10485760, 
 				currentStepNum:undefined, 
 				activeNode:undefined, 
@@ -298,7 +308,8 @@ var componentloader = function(em, sl){
 				assetRequestUrl:'assetmanager.html',
 				tagNameMap:{},
 				tagIdForRequest:undefined,
-				nodeTemplateParams:{}
+				nodeTemplateParams:{},
+				defaultThumbUrl:'/vlewrapper/vle/images/projectThumb.png'
 			},
 			events: {
 				'openProject':[null,null], 
@@ -318,6 +329,8 @@ var componentloader = function(em, sl){
 				'stepNumberChanged':[null,null],
 				'stepTermChanged':[null,null],
 				'stepTermPluralChanged':[null,null],
+				'activityTermChanged':[null,null],
+				'activityTermPluralChanged':[null,null],
 				'author':[null,null],
 				'nodeIconUpdated':[null,null], 
 				'nodeTitleChanged':[null,null], 
@@ -326,7 +339,8 @@ var componentloader = function(em, sl){
 				'moveSelectedRight':[null,null], 
 				'saveProject':[null,null],
 				'createNewProject':[null,null], 
-				'copyProject':[null,null], 
+				'copyProject':[null,null],
+				'copyProjectSelected':[null,null],
 				'createNewSequence':[null,null], 
 				'createNewNode':[null,null],
 				'nodeTypeSelected':[null,null], 
@@ -340,8 +354,10 @@ var componentloader = function(em, sl){
 				'useSelected':[null,null], 
 				'disengageSelectMode':[null,null],
 				'processChoice':[null,null], 
-				'editProjectFile':[null,null], 
-				'editProjectMetadata':[null,null], 
+				'editProjectFile':[null,null],
+				'editProjectStructure':[null,null],
+				'editProjectMetadata':[null,null],
+				'editIMSettings':[null,null],
 				'saveStep':[null,null], 
 				'saveAndCloseStep':[null,null], 
 				'authorStepModeChanged':[null,null], 
@@ -443,6 +459,8 @@ var componentloader = function(em, sl){
 					view.eventManager.subscribe('autoStepChanged', view.authorDispatcher, view);
 					view.eventManager.subscribe('stepTermChanged', view.authorDispatcher, view);
 					view.eventManager.subscribe('stepTermPluralChanged', view.authorDispatcher, view);
+					view.eventManager.subscribe('activityTermChanged', view.authorDispatcher, view);
+					view.eventManager.subscribe('activityTermPluralChanged', view.authorDispatcher, view);
 					view.eventManager.subscribe('stepNumberChanged', view.authorDispatcher, view);
 					view.eventManager.subscribe('author', view.authorDispatcher, view);
 					view.eventManager.subscribe('nodeIconUpdated', view.authorDispatcher, view);
@@ -453,6 +471,7 @@ var componentloader = function(em, sl){
 					view.eventManager.subscribe('saveProject', view.authorDispatcher, view);
 					view.eventManager.subscribe('createNewProject', view.authorDispatcher, view);
 					view.eventManager.subscribe('copyProject', view.authorDispatcher, view);
+					view.eventManager.subscribe('copyProjectSelected', view.authorDispatcher, view);
 					view.eventManager.subscribe('createNewSequence', view.authorDispatcher, view);
 					view.eventManager.subscribe('createNewNode', view.authorDispatcher, view);
 					view.eventManager.subscribe('nodeTypeSelected', view.authorDispatcher, view);
@@ -485,6 +504,7 @@ var componentloader = function(em, sl){
 					view.eventManager.subscribe('disengageSelectMode', view.selectDispatcher, view);
 					view.eventManager.subscribe('processChoice', view.selectDispatcher, view);
 					view.eventManager.subscribe('editProjectMetadata', view.metaDispatcher, view);
+					view.eventManager.subscribe('editIMSettings', view.metaDispatcher, view);
 					view.eventManager.subscribe('maxScoreUpdated', view.metaDispatcher, view);
 					view.eventManager.subscribe('postLevelChanged', view.metaDispatcher, view);
 					view.eventManager.subscribe('setLastEdited', view.metaDispatcher, view);
@@ -571,6 +591,7 @@ var componentloader = function(em, sl){
 					view.eventManager.subscribe("premadeCommentWindowLoaded", view.authoringToolPremadeCommentsDispatcher, view);
 					view.eventManager.subscribe("premadeCommentLabelClicked", view.authoringToolPremadeCommentsDispatcher, view);
 					view.eventManager.subscribe("gotoDashboard", view.authorDispatcher, view);
+					view.eventManager.subscribe('editProjectStructure', view.authorDispatcher, view);
 					
 					if (window.parent && window.parent.portalAuthorUrl) {
 						window.parent.loaded();
@@ -603,6 +624,9 @@ var componentloader = function(em, sl){
 					view.initializeImportViewDialog();
 					view.initializeIconsViewDialog();
 					view.initializeAnalyzeProjectDialog();
+					view.initializeEditTitleDialog();
+					view.initializeEditIMSettingsDialog();
+					view.initializeEditProjectStructureDialog();
 										
 					window.onunload = env.onWindowUnload;
 				}

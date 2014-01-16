@@ -145,7 +145,7 @@ View.prototype.startVLE = function(){
  */
 View.prototype.displayGlobalTools = function() {
 	// Insert show all work link
-	var myWorkLink = "<a id='viewMyWorkLink' onclick='eventManager.fire(\"showAllWork\")' title='"+this.getI18NString("mywork_button_title")+"'>"+this.getI18NString("mywork_button_text")+"</a>";
+	var myWorkLink = "<a id='viewMyWorkLink' onclick='eventManager.fire(\"showAllWork\")' title='"+this.getI18NString("vle_toolbar_myWorkTitle")+"'>"+this.getI18NString("vle_toolbar_myWork")+"</a>";
 	$('#viewMyWork').html(myWorkLink);
 	
 	// Insert show flagged work link
@@ -217,7 +217,7 @@ View.prototype.showToolsBasedOnConfig = function(runInfo) {
 		/*
 		 * display student assets link if run has student asset uploader enabled
 		 */
-		var studentAssetsLink=	"<a id='viewMyFilesLink' onclick='eventManager.fire(\"viewStudentAssets\",null)' title='View and Upload Files'>"+this.getI18NString("file_button_text")+"</a>";
+		var studentAssetsLink=	"<a id='viewMyFilesLink' onclick='eventManager.fire(\"viewStudentAssets\",null)' title='View and Upload Files'>"+this.getI18NString("vle_toolbar_files")+"</a>";
 		$('#viewMyFiles').html(studentAssetsLink);
 		$('#viewMyFiles').show().css('display','inline');
 	} else if (runInfo.isStudentAssetUploaderEnabled != null &&
@@ -230,7 +230,7 @@ View.prototype.showToolsBasedOnConfig = function(runInfo) {
 		/*
 		 * display chatroom link if run has chatroom enabled
 		 */
-		var displayChatRoomLink = "<a id='displayChatRoomLink' onclick='view.displayChatRoom()' title='Open Chat Room'>"+this.getI18NString("display_chat_room")+"</a>";
+		var displayChatRoomLink = "<a id='displayChatRoomLink' onclick='view.displayChatRoom()' title='Open Chat Room'>"+this.getI18NString("vle_toolbar_chat")+"</a>";
 		$('#viewChatRoom').html(displayChatRoomLink);
 		$('#viewChatRoom').show().css('display','inline');
 	} else {
@@ -241,7 +241,7 @@ View.prototype.showToolsBasedOnConfig = function(runInfo) {
 	if (runInfo.isIdeaManagerEnabled != null && runInfo.isIdeaManagerEnabled) {
 		// display the idea basket links if the run/project has idea basket enabled
 		// if project is using IM version > 1, set custom link text based on IM settings
-		var basketLinktext = this.getI18NString("ideas_button_text"), addIdeaLinkText = this.getI18NString("addidea_button_text");
+		var basketLinktext = this.getI18NString("vle_toolbar_ideaBasket"), addIdeaLinkText = this.getI18NString("vle_toolbar_newIdea");
 		if (this.getProjectMetadata() != null && this.getProjectMetadata().tools != null){
 			if('ideaManagerSettings' in this.getProjectMetadata().tools){
 				var imSettings = this.getProjectMetadata().tools.ideaManagerSettings;
@@ -282,7 +282,7 @@ View.prototype.showToolsBasedOnConfigs = function(metadata, runInfo) {
 		/*
 		 * display student assets link if run has student asset uploader enabled
 		 */
-		var studentAssetsLink=	"<a id='viewMyFilesLink' onclick='eventManager.fire(\"viewStudentAssets\",null)' title='View and Upload Files'>"+this.getI18NString("file_button_text")+"</a>";
+		var studentAssetsLink=	"<a id='viewMyFilesLink' onclick='eventManager.fire(\"viewStudentAssets\",null)' title='View and Upload Files'>"+this.getI18NString("vle_toolbar_files")+"</a>";
 		$('#viewMyFiles').html(studentAssetsLink);
 		$('#viewMyFiles').show().css('display','inline');
 	} else {
@@ -311,7 +311,7 @@ View.prototype.showToolsBasedOnConfigs = function(metadata, runInfo) {
 		/*
 		 * display chatroom link if run has chatroom enabled
 		 */
-		var displayChatRoomLink = "<a id='displayChatRoomLink' onclick='view.displayChatRoom()' title='Open Chat Room'>"+this.getI18NString("display_chat_room")+"</a>";
+		var displayChatRoomLink = "<a id='displayChatRoomLink' onclick='view.displayChatRoom()' title='Open Chat Room'>"+this.getI18NString("vle_toolbar_chat")+"</a>";
 		$('#viewChatRoom').html(displayChatRoomLink);
 		$('#viewChatRoom').show().css('display','inline');
 	} else {
@@ -327,7 +327,7 @@ View.prototype.showToolsBasedOnConfigs = function(metadata, runInfo) {
 	if (isIdeaManagerEnabled) {
 		// display the idea basket links if the run/project has idea basket enabled
 		// if project is using IM version > 1, set custom link text based on IM settings
-		var basketLinktext = this.getI18NString("ideas_button_text"), addIdeaLinkText = this.getI18NString("addidea_button_text");
+		var basketLinktext = this.getI18NString("vle_toolbar_ideaBasket"), addIdeaLinkText = this.getI18NString("vle_toolbar_newIdea");
 		if (this.getProjectMetadata() != null && this.getProjectMetadata().tools != null){
 			if('ideaManagerSettings' in this.getProjectMetadata().tools){
 				var imSettings = this.getProjectMetadata().tools.ideaManagerSettings;
@@ -587,7 +587,7 @@ View.prototype.onProjectLoad = function(){
 
 View.prototype.retrieveThemeLocales = function(){
 	if('theme' in this){
-		this.retrieveLocales("theme",view.config.getConfigParam("wiseBaseURL")+"/vle/themes/" + this.theme + "/i18n/");
+		this.retrieveLocales("theme","/vle/themes/" + this.theme + "/i18n/");
 	} else {
 		this.onThemeLoad();
 	}
@@ -923,10 +923,10 @@ View.prototype.renderNode = function(position){
 	this.getState().setCurrentNodeVisit(nodeToVisit);
 	nodeToVisit.render(null, studentWork, status.value);
 	
+	this.eventManager.fire('renderNodeCompleted', this.currentPosition);
+	
 	//update the active tag map constraints to see if any have been satisfied and we need to remove any
 	this.updateActiveTagMapConstraints();
-	
-	this.eventManager.fire('renderNodeCompleted', this.currentPosition);
 };
 
 /**

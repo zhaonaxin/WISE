@@ -1,774 +1,1029 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-<meta http-equiv="X-UA-Compatible" content="chrome=1" /> 
-<script type='text/javascript' src='events/eventmanager.js'></script>
-<script type="text/javascript" src="util/scriptloader.js"></script>
-<script type='text/javascript' src='author/pac.js'></script>
+  <meta charset="utf-8">
+  <!-- Use the .htaccess and remove these lines to avoid edge case issues.
+       More info: h5bp.com/i/378 -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-<link rel="shortcut icon" href="images/favicon.ico"></link>
-<link rel='stylesheet' media='screen' type='text/css' href="author/css/pac.css"></link>
-<script type='text/javascript'>
-/*
- * Loads scripts when body is loaded 
- */
-function loaded(){
-	//initializeLoading();
-	scriptloader.bootstrap(this, bootstrapListener);
-};
+  <title>WISE Project Authoring Tool</title>
+  <meta name="description" content="">
 
-/*
- * Starts the preview of the project once the vle is loaded
- */
-function startWithParams(em){
-	eventManager.fire('startPreview',em);
-};
+  <!-- Mobile viewport optimized: h5bp.com/viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-/*
- * Listener that is run when the bootstrap loading is complete.
- * Loads and starts the authoring view.
- */
-function bootstrapListener(type,args,obj){
-	if(args[0]=='bootstrap'){
-		createEnvironment('env', eventManager);
-		env.startView('authoring');
-	}
-};
-
-/**
- * Check if the text area is over the max length, if so, display an alert
- * and reduce the text value in the text area to the max length
- * @param textAreaName the name of the text area from the user's perspective
- * @param textAreaId the dom id of the text area
- * @param maxLength the max length for that text area
- */
-function checkTextAreaLength(textAreaName, textAreaId, maxLength) {
-    //get the text area
-	var textArea = document.getElementById(textAreaId);
-
-    //get the text in the text area
-	var textAreaValue = textArea.value;
-
-    //check if the length of the text is over the limit
-	if(textAreaValue.length > maxLength) {
-		//the length is over the limit
-		
-		//display an alert message
-		alert(textAreaName + " is limited to " + maxLength + " characters\n\nCharacters will be deleted from the end");
-
-		/*
-		 * crop the text in the text area by removing characters at the end
-		 * of the text area
-		 */
-		textArea.value = textAreaValue.substring(0, maxLength);
-	}
-}
-
-var view;
-
-</script>
+  <link rel="shortcut icon" href="images/favicon.ico"></link>
+  
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="css/authoring/load.css"> 
+	
+	<!-- All JavaScript at the bottom, except this Modernizr build.
+  	   Modernizr enables HTML5 elements & feature detects for optimal performance.
+       Create your own custom Modernizr build: www.modernizr.com/download/ -->
+  	<script src="util/modernizr.custom.js"></script>
+  	
 </head>
-
-<body id="w4_author" onload='loaded();' onScroll='eventManager.fire("authorWindowScrolled");' style='height:500px'>
-	
-<div id="centeredDiv" style="display:none;">
-
-<div id="authorHeader">
-	<div id="authorToolHeader"><div>WISE 4&nbsp;<img src="images/favicon_panda.ico" alt="WISE Panda" border="0" /></div>
-		<div>Authoring Tool</div>
-		<div><span id="authorToolLinks"><a href="./author/authorToolInstructions.html" title="Author Tool Instructions" target="_blank">Instructions</a>
-		<!--<a href="./author/authorToolKeyboardShortcuts.html" title="Author Tool Keyboard Shortcuts" target="_blank">Keyboard
-		Shortcuts</a>--></span></div>
-	</div>  
-	
-	 
-	
-	<div id="authorButtons">
-		<div>
-			<button onclick="eventManager.fire('gotoDashboard');" id="gotoDashboard" title='Exit to Teacher Dashboard'><img src="images/go-home.png" alt="goto Teacher Dashboard icon" /><br />
-				Exit to Home</button>
-			<button onclick="eventManager.fire('openProject');" id="openProjectButton" title='Open an Existing Project for Editing'><img src="images/openProject.png" alt="open project icon" /><br />
-				Open Project</button>
-			<button onclick="eventManager.fire('createNewProject')" id="createProjectButton" title='Create a New Project'><img src="images/createProject.png" alt="create project icon" /><br />
-				Create Project</button>
-			<button onclick='eventManager.fire("copyProject")' id='copyProjectButton' title='Create a Copy of Current Project'><img src="images/copyProject.png" alt="create project icon" /><br />
-				Copy Project</button>
-		</div>
-		<div id="projectButtons">
-			<button disabled="true" onclick="eventManager.fire('saveProject');" id="saveProjectButton" title='Save Project'><img src="images/saveProject.png" alt="save project icon" /><br />
-				Save Project</button>
-			<button disabled="true" onclick="eventManager.fire('viewAssets')" title='Add/Edit Project Files'><img src="images/uploadArt.png" alt="Manage Art/Files" /><br />
-				Manage Art/Files</button>
-			<button disabled="true" onclick='eventManager.fire("editProjectMetadata")' id='editprojectmetaLI' title='Edit Lesson Plan & Project Details'><img src="images/editProjectFile.png"
-				alt="edit project file icon" /><br/>Edit Info</button>
-			<button disabled="true" onclick='eventManager.fire("previewProject");' id="previewProjectButton" title='Preview Current Project'><img src="images/previewproject.png"
-				alt="preview project icon" /><br />Preview Project</button>
-		</div>
-		<!--<li><a onclick="eventManager.fire('createNewSequence');" id="createActivityButton"><img src="images/addSequence.png"
-			alt="Add Activity icon" /><br />Add Activity</a></li>
-		<li><a onclick="eventManager.fire('createNewNode');" id="createNodeButton"><img src="images/addNode.png" alt="Add Step icon" /><br />
-			Add<br />Step</a>
-		<li><img src="images/separatorIcon2.png" alt="tool separator icon" /></li>
-		<li><a onclick='eventManager.fire("moveSelected");' id='moveButton'><img src="images/move.png" alt="Move Selected Item" />
-			Move Selected</a></li>
-		<li><a onclick="eventManager.fire('deleteSelected');" id="deleteNodeButton"><img src="images/trash.png"
-			alt="delete selected icon" /><br />Delete Selected</a></li>
-		<li><a onclick="eventManager.fire('duplicateSelected');" id="duplicateodeButton"><img src="images/duplicateNode.png"
-			alt="duplicate selected icon" /><br />Duplicate Selected</a></li>-->
-	</div>
-
-	 <div id="toolsAreaAuthor">
-	    <dl class="dropdownAuthor">
-	        <dt id="one-ddheader" onmouseover="ddMenu('one',1);" onmouseout="ddMenu('one',-1);">
-	            <span id="menuTitle">
-	                extras
-	            </span>
-	            <img src="images/go-down.png" alt="Menu Arrow" width="15" height="14" border="0" />
-	        </dt>
-	        <dd id="one-ddcontent" onmouseover="cancelHide('one');" onmouseout="ddMenu('one',-1);" onmouseup="ddMenu('one',-1);">
-	            <ul>
-	     
-	                <li style="text-decoration:line-through;"><a onclick="" id="importNodeButton">
-	                <img src="images/importNode.png" alt="import step icon"  />Import an Activity or Step<br/>(from Library, Custom, or Shared project)</a></li>
-	
-	                <!--
-	         	    <li style="text-decoration:line-through;"><a onclick="" class="underline"><img src="images/shareProject.png"
-					alt="share project icon"  />Share Project</a></li>	
-					-->
-			
-				<!--<td><a onclick="eventManager.fire('createNewProject')" id="createProjectButton"><img src="images/createProject.png" alt="create project icon" />
-				Create Project</a></td>-->
-	
-				<!--<td><a onclick='eventManager.fire("copyProject")' id='copyProjectButton'><img src="images/copyProject.png" alt="create project icon" />
-				Copy Project</a></td>-->
-				
-				<!--<li id='editProjectTagsMenu' style='display:none;'><a onclick='eventManager.fire("editProjectTags")'>Add/Edit project tags</a></li>-->
-	
-				<!--<li><a onclick="eventManager.fire('uploadAsset')"><img src="images/uploadArt.png" alt="Upload Art/Files" />
-				Upload Art/Files</a></li>-->
-			
-				<!--<li><a onclick="eventManager.fire('viewAssets')"><img src="images/manageArt.png" alt="Manage Art/Files" />
-				Manage Art/Files</a></li>-->
-			
-				<!--<li><a onclick='eventManager.fire("useSelected")' id='useButton'>
-					<img src="images/link_copy2.png" alt="Mirror Copy Selected Item(s)" />Mirror Selected Step<br/>(make data-clone of selected step)</a></li>-->
-	
-				<li><a onclick="eventManager.fire('startCreateReviewSequence', 'Peer')"><img src="images/manageArt.png" alt="Create Peer Review Sequence" />
-				Create Peer Review Sequence</a></li>
-				
-				<li><a onclick="eventManager.fire('startCreateReviewSequence', 'Teacher')"><img src="images/manageArt.png" alt="Create Teacher Review Sequence" />
-				Create Teacher Review Sequence</a></li>
-				
-			<div id="listTitle">Advanced Users Only</div>
-			
-			<li><a onclick="view.openPremadeComments()"><img src="images/constraint.png" alt="find broken links in project" />Open Premade Comments for Project</a></li>
-			
-			<li><a onclick="eventManager.fire('findBrokenLinksInProject')"><img src="images/constraint.png" alt="find broken links in project" />Find Broken Links in Project</a></li>
-			
-			<li><a onclick="eventManager.fire('findUnusedAssetsInProject')"><img src="images/constraint.png" alt="find unused assets in project" />Find Unused Assets in Project</a></li>
-			
-			<li><a onclick="eventManager.fire('deleteProject')"><img src="images/constraint.png" alt="delete project" />Delete Project</a></li>
-			
-			<li><a onclick="eventManager.fire('cleanProject')"><img src="images/edit-clear.png" alt="clean project" />Clean Project</a></li>
-			
-			 <li><a onclick="eventManager.fire('editProjectFile')"><img src="images/document-properties.png"
-			alt="edit project file icon" />Edit Project Data File</a></li>
-			
-			<li><a onclick="eventManager.fire('authorConstraints')"><img src="images/constraint.png" alt="author constraints icon"/>Author
-			Student Navigation Constraints</a></li>
-			
-			<li><a onclick="eventManager.fire('exportProject')" ><img src="images/copyProject.png"
-			alt="Download Project as Zip File"  />Download Project</a></li>
-            			
-			<li><a class='last' onclick="eventManager.fire('reviewUpdateProject')" ><img src="images/constraint.png"
-			alt="Update Project"  />Update Project</a></li>
-			
-			<!-- 
-			        <li><a onclick="eventManager.fire('importProject')" id="importProjectButton"><img
-			src="images/importProject.png" alt="import project icon"  />Restore Project</a></li>
-			 -->
-				    <!-- 	<li><a onclick="eventManager.fire('retrieveArchive')" id="retrieveArchiveButton">Retrieve Archived Project</a></li>  -->
-			
-			        <!--  <li><a onclick='eventManager.fire("createTODOTask")' id='createTODOTaskLI'>Create TODO Task</a></li>  -->
-			        
-			        <!--  <li><a onclick='eventManager.fire("editTODOTasks")' id='editTODOTasksLI'>Edit TODO Tasks</a></li>  -->
-			        
-	            </ul>
-	        </dd>
-	    </dl>
-	</div>
-                
-</div>   <!--end of div  authorHeader-->
-
-<div id="currentProjectContainer">
-<div id="currentProjectContent">
-	<div id='projectTitle'>Project Title: 
-		<input type="text" id='projectTitleInput' title='Click to Edit Project Title' size='40' onchange='eventManager.fire("projectTitleChanged")'/>
-		<a id='editProjectTitle' onclick='$("#projectTitleInput").focus();' title='Edit Project Title'>Edit</a>
-		<div id='projectID'>ID:&nbsp;<span id='projectIdDisplay'></span></div>
-		<div id='projectModeDiv'><span>Simple Mode</span><a id='toggleMode' onclick='eventManager.fire("toggleProjectMode")' title='Toggle Project Mode (Simple or Advanced)'>Toggle</a></div>
-	</div>
-	<div id="authorOptions">
-		<div class='authorOption'>Number Steps By: 
-			<select id='numberStepSelect' onchange='eventManager.fire("stepNumberChanged")'>
-				<option value='0'>Project</option>
-				<option value='1'>Activity</option>
-			</select>
-			<!--<input align="middle" type='checkbox' name='autoStepCheck' id='autoStepCheck1' onclick='eventManager.fire("autoStepChanged")'/>
-			<span class="spacer">Number steps per Project</span>-->
-		</div>
-		<!--<div class='authorOption'>
-			<input align="middle" type='checkbox' name='stepLevelNumbering' id='stepLevel' onclick='eventManager.fire("stepLevelChanged")'/>
-			<span class="spacer">Number steps per Activity</span>
-		</div>-->
-		<div class="authorOption">
-			Step Term:
-			<input type='text' name='stepTerm' title='Click to Edit Step Term' id='stepTerm' onchange='eventManager.fire("stepTermChanged")' size='8'/>
-			<a id='editStepTerm' onclick='$("#stepTerm").focus();' title='Edit Step Term'>Edit</a>
-		</div>
-		<div class="authorOption">
-			Step Term (Plural):
-			<input type='text' name='stepTermPlural' title='Click to Edit Step Term Plural form' id='stepTermPlural' onchange='eventManager.fire("stepTermPluralChanged")' size='8'/>
-			<a id='editStepTermPlural' onclick='$("#stepTermPlural").focus();' title='Edit Step Term Plural'>Edit</a>
-		</div>
-		<div class='authorOption' id="postLevelOption">Logging Level:
-			<select id='postLevelSelect' onchange='eventManager.fire("postLevelChanged")'>
-				<option value='5'>High (All Steps)</option>
-				<option value='1'>Low (Only Steps With Student Work)</option>
-			</select>
-		</div>
-	</div>
-	<div id='notificationDiv'></div>
-		<!-- this modal div appears to display instructional messages to the user while MOVING item(s) -->
-	<div id='selectModeDiv' style="display:none;">
-		<div id='selectModeSpan'><span id='selectModeMessage'></span><a onclick='eventManager.fire("disengageSelectMode","-1")'>Cancel</a></div>
-	</div>
-	<div id="concurrentAuthorDiv"></div>
-</div>
-</div>
-
-<div id='projectTools'>
-	<div id='selectNodeTools'>
-		<button class='first' title='Select All Steps & Activities' onclick='eventManager.fire("selectAll");'><span class='tool-icon-left action-icon action-icon-select'></span><span class='tool-label'>Select All</span></button>
-		<button class='last' title='Deselect All Steps & Activities' onclick='eventManager.fire("clearAll");'><span class='tool-icon-left action-icon action-icon-deselect'></span><span class='tool-label'>Select None</span></button>
-	</div>
-	<div id='createNodeTools'>
-		<button id='newSequence' class='first' title='Add New Activity to Project' onclick='eventManager.fire("createNewSequence");'><span class='tool-icon action-icon action-icon-new2'></span><span class='tool-label'>Add Activity</span></button>
-		<button id='newNode' class='last' title='Add New Step to Project' onclick='eventManager.fire("createNewNode");'><span class='tool-icon action-icon action-icon-new'></span><span class='tool-label'>Add Step</span></button>
-	</div>
-	<div id='editNodeTools'>
-		<button id='moveSelected' disabled='true' class='first' title='Move Selected Items' onclick='eventManager.fire("moveSelected");'><span class='tool-icon action-icon action-icon-move action-icon-inactive'></span><span class='tool-label'>Move</span></button>
-		<button id='duplicateSelected' disabled='true' class='mid' title='Duplicate Selected Items' onclick='eventManager.fire("duplicateSelected");'><span class='tool-icon action-icon action-icon-copy action-icon-inactive'></span><span class='tool-label'>Duplicate</span></button>
-		<!-- <button id='useButton' disabled='true' class='mid' title='Mirror Selected Step (Make Data Clone)' onclick='eventManager.fire("useSelected");' ><span class='tool-icon action-icon action-icon-clone action-icon-inactive'></span><span class='tool-label'>Mirror</span></button> -->
-		<button id='deleteSelected' disabled='true' class='last' title='Delete Selected Items' onclick='eventManager.fire("deleteSelected");'><span class='tool-icon action-icon action-icon-delete action-icon-inactive'></span><span class='tool-label'>Delete</span></button>
-	</div>
-	<div id='tagTools'>
-		<button id='displayTagView' title='Tags' onclick='eventManager.fire("displayTagView");'><span class='tool-icon action-icon action-icon-copy action-icon-inactive'></span><span class='tool-label'>Tags</span></button>
-	</div>
-	<div id='importTools'>
-		<button id='displayImportView' title='Import' onclick='eventManager.fire("displayImportView");'><span class='tool-icon action-icon action-icon-copy action-icon-inactive'></span><span class='tool-label'>Import</span></button>
-	</div>
-	<div id='iconsTools'>
-		<button id='displayIconsView' title='Icons' onclick='eventManager.fire("displayIconsView");'><span class='tool-icon action-icon action-icon-copy action-icon-inactive'></span><span class='tool-label'>Icons</span></button>
-	</div>
-	<div id='visibiltyNodeTools'>
-		<button id='hideNodesBtn' title='Hide All Steps in Project' onclick='eventManager.fire("hideNodes");'><span class='tool-icon action-icon action-icon-hide'></span><span class='tool-label'>Hide Steps</span></button>
-		<button id='showNodesBtn' title='Show All Steps in Project' onclick='eventManager.fire("unhideNodes");' class='hidden'><span class='tool-icon action-icon action-icon-show'></span><span class='tool-label'>Show Steps</span></button>
-	</div>
-	<!--<td><div id='projectTasks' class='taskInfo' style='display: none;' onMouseOver='eventManager.fire("showTaskBox","project")' onMouseOut='eventManager.fire("hideTaskBox")'>Project Tasks</div></td>
-	<td><div id='userTasks' class='taskInfo' style='display: none;' onMouseOver='eventManager.fire("showTaskBox","users")' onMouseOut='eventManager.fire("hideTaskBox")'>User Tasks</div></td>-->
-</div>
-
-<div id="authoringContainer">
-<div id="authoringTable">
-	<div id="assignedcontainer">
-		<div id="ddTable">
-			<div id='projectLayout'>
-				<div id='dynamicProject'></div>
-			</div>
-			</div>
-		</div>
-	</div>
-</div>
-</div>
-
-<div id="clearFloats" class="clearFloats"></div>
-
-<div id='createProjectDialog' style="display: none;">
-<div>Please enter a name for your new project:</div>
-<div>
-	<input type='text' id='projectInput'/><br/>
-</div>
-</div>
-
-<div id='openProjectDialog' style="display: none;">
-<div class='hd'>Select a Project from the list below.</div>
-<div class='bd'>
-<form method='POST' action='filemanager.html' id='openProjectForm' style='display:none;'><select id='selectProject'
-		onchange='eventManager.fire("projectSelected")'>
-		<option name='placeholderOption' value='' />
-</select>
-</form>
-<div id='loadingProjectMessageDiv' style='display:none;'>
-	<div>Updating project list...</div>
-	<div><img src='images/loading.gif'/></div>
-</div>
-</div>
-</div>
-
-<div id='createSequenceDialog' style="display: none;">
-<div class='hd'>Please enter a UNIQUE name for the new Activity:</div>
-<div class='bd'>
-	<input type='text' size='40' id='createSequenceInput' /><br/>
-</div>
-</div>
-
-<div id='createNodeDialog' style="display: none;">
-<div class='bd'>
-	<div id='createNodeDiv'>
-		<label for='createNodeTitle'>Create Step Title:</label>
-		<input type='text' size='40' id='createNodeTitle'/><br/>
-		
-		<label for='createNodeType'>Select Step Type:</label> 
-		<select id='createNodeType' onchange='eventManager.fire("nodeTypeSelected");'>
-			<option value=""></option>
-		</select>
-		<a onclick='eventManager.fire("openStepTypeDescriptions")' style='color:blue;text-decoration:underline'>Step Type Descriptions</a>
-		<br/>
-	</div>
-</div>
-</div>
-
-<div id="editProjectFileDialog" style="display: none;">
-<div class='hd'>Edit Project File</div>
-<div class='bd'>
-	 <div id='editProjectDiv'> 
-	 	<textarea id='projectText' cols='110' rows='32' wrap='hard' name='param3' /></textarea>
-	 </div><br/>
-</div>
-</div>
-
-<!--<div id="assetUploaderDialog" style="display: none;">
-	<div class='hd'>Upload a File to the WISE4 Server</div>
-	<div id='assetUploaderBodyDiv' class='bd'>
-	
-	<input type='file' id='uploadAssetFile' name='dontmatter' size='30'></input><br/>
-
-	<div id="uploaderInstructions">
-		<h5>Example Link to an Uploaded File:</h5>
-		<p>If the uploaded file is called <b>myimage.jpg</b> then your HTML reference will be:</p>
-		<p class="sampleCode">&#60;img src="assets/myimage.jpg" alt="description of graphic here" /&nbsp;&#62;</p>
-	</div>
-	</div>
-</div>-->
-
-<div id='assetEditorDialog' style="display: none;">
-<div class='hd'>
-	<div>Upload a file to the WISE4 server:</div>
-	<div id='assetUploaderBodyDiv' class='bd'>
-		<input type='file' id='uploadAssetFile' name='uploadAssetFile' size='50' onchange="eventManager.fire('submitUpload')"></input><div id='assetProcessing' style='display:none;'><img class='loadingImg' src='images/ajax-loader.gif' alt='loading...' /></div>
-	</div>
-</div>
-<div class='bd'><div>Existing Files: </div>
-	<select id='assetSelect' size='10'></select>
-	<div id='sizeDiv'></div>
-	<div id="uploaderInstructions">
-		<p>If an uploaded image is called <b>myimage.jpg</b>, its HTML reference will be:</p>
-		<p class="sampleCode">&#60;img src="assets/myimage.jpg" alt="description of image here" /&#62;</p>
-	</div>
-</div>
-</div>
-
-<div id='copyProjectDialog' style='display: none;'>
-<div class='hd'>Please select the project you would like to copy:</div>
-<div class='bd'>
-	<div id='copyProjectDiv'>
-		<select id='copyProjectSelect'></select>
-	</div><br/>
-</div>
-</div>
-
-<div id='contextMenu' class='contextMenu' style='display:none;'></div>
-
-<div id='editProjectMetadataDialog' style='display:none;'>
-<div class='bd'>
-	<div id='editProjectMetadataMainDiv'>
-		<table>
-		<tr><td id="col1">Project Title:</td><td class="col2"><input id='projectMetadataTitle' type="text"/></input></td></tr>
-		<tr><td>Author:</td><td> <div id='projectMetadataAuthor'/>[Name of original author (non-editable) shown here]</div></td></tr>
-		<tr><td>Contact Name/Email:</td><td>  <input type='text' id='projectMetadataContact'/></td></tr>
-		
-		<!-- TODO: Perhaps load metadata options programmatically based on vle config? -->
-		<tr><td>Theme:</td>
-			<td >
-				<select name="theme" id="projectMetadataTheme"></select>
-				<select name="navMode" id="projectMetadataNavigation"></select> 
-			</td>
-		</tr>
-		
-		<!-- TODO: Perhaps load metadata options programmatically based on vle config? -->
-		<tr><td>Subject:</td>
-			<td >
-				<select name="searchSubject" id="projectMetadataSubject">
-					<option id='subjectLife'  value='Life Science'>Life Science</option>
-					<option id='subjectPhysical' value='Physical Science'>Physical Science</option>
-					<option id='subjectEarth'  value='Earth Science'>Earth Science</option>
-					<option id='subjectGeneralScience'  value='General Science'>General Science</option>
-					<option id='subjectBiology' value='Biology'>Biology</option>
-					<option id='subjectChemistry' value='Chemistry'>Chemistry</option>
-					<option id='subjectPhysics'  value='Physics'>Physics</option>
-					<option id='subjectWISEResearch'  value='WISE Research'>WISE Research</option>
-					<option selected id='subjectAll' disabled="disabled" value=''>select an option</option>
-				</select> 
-			</td>
-		</tr>
-			
-		<tr><td>Grade Level:</td>
-			<td>
-				<select name="studentGrades" id="projectMetadataGradeRange">
-					<option id='grade1' value='3-5'>Grades 3-5</option>
-					<option id='grade2' value='6-8'>Grades 6-8</option>
-					<option id='grade3' value='9-12'>Grades 9-12</option>
-					<option id='grade4' value='6-12'>Grades 6-12</option>
-					<option selected id='gradeAll' disabled="disabled" value=""'>select an option</option>
-				</select>	
-			</td></tr>
-		
-		<tr><td>Total Time (hrs):</td>
-			<td>
-				<select name="totalTime" id="projectMetadataTotalTime">
-							<option id='total1' value='2-3 hours'>2-3 hours</option>
-							<option id='total2' value='4-5 hours'>4-5 hours</option>
-							<option id='total3' value='6-7 hours'>6-7 hours</option>
-							<option id='total4' value='8-9 hours'>8-9 hours</option>
-							<option id='total5' value='10-11 hours'>10-11 hours</option>
-							<option id='total6' value='Over 12 hours'>Over 12 hours</option>
-							<option selected id='totalTime' disabled="disabled" value=""'>select an option</option>
-				</select>
-			</td></tr>
-			
-		<tr><td>Computer Time (hrs):</td>
-			<td>
-				<select name="totalTime" id="projectMetadataCompTime">
-							<option id='total1' value='2-3 hours'>2-3 hours</option>
-							<option id='total2' value='4-5 hours'>4-5 hours</option>
-							<option id='total3' value='6-7 hours'>6-7 hours</option>
-							<option id='total4' value='8-9 hours'>8-9 hours</option>
-							<option id='total5' value='10-11 hours'>10-11 hours</option>
-							<option id='total6' value='Over 12 hours'>Over 12 hours</option>
-							<option selected id='computerTime' disabled="disabled" value=""'>select an option</option>
-				</select>
-			</td></tr>	
-
-		<tr><td>Language:</td>
-			<td>
-				<select name="languageType" id="projectMetadataLanguage">
-							<option id='english' value='English'>English</option>
-							<option id='spanish' value='Spanish'>Spanish</option>
-							<option id='hebrew' value='Hebrew'>Hebrew</option>
-							<option id='chinese' value='Chinese'>Chinese</option>
-							<option id='japanese' value='Japanese'>Japanese</option>
-							<option id='korean' value='Korean'>Korean</option>
-							<option id='dutch' value='Dutch'>Dutch</option>
-							<option selected id='languageAll'   disabled="disabled">select an option</option>
-				</select>
-			</td></tr>	
-
-		<tr><td>Project Summary:<br>(limit 255 characters)</br></td><td><textarea class="size1" id='projectMetadataSummary' onkeyup='checkTextAreaLength("Project Summary", "projectMetadataSummary", 255)'></textarea></td></tr>
-		<tr><td>Keywords:<br/>(comma separated)</td><td><textarea class="size2" id='projectMetadataKeywords'></textarea></td></tr>
-		<tr><td>Technical Needs:</td>
-			<td>
-				<span style="font-size:85%">(select all that apply)</span>&nbsp;&nbsp;
-				<input type="checkbox" name="flash" value="flash" id="flash"/>&nbsp;<label for="Flash">Flash</label>&nbsp;&nbsp;
-				<input type="checkbox" name="java" value="java" id="java"/>&nbsp;<label for="Java">Java</label>&nbsp;&nbsp;
-				<input type="checkbox" name="quickTime" value="quickTime" id="quickTime"/>&nbsp;<label for="quickTime">QuickTime</label>&nbsp;&nbsp;
-			</td></tr>		
-		<tr><td>Tech Details:</td><td><textarea class="size2" id='projectMetadataTechDetails'></textarea></td></tr>
-		<tr><td>Project settings:</td>
-			<td>
-				<span style="font-size:85%">(select all that apply)</span>&nbsp;&nbsp;
-				<input id='enableIdeaManager' name="enableIdeaManager" type="checkbox"></input><label for="enableIdeaManager">Enable Idea Manager</label>&nbsp;&nbsp;
-				<input id='enablePublicIdeaManager' name="enablePublicIdeaManager" type="checkbox"></input><label for="enablePublicIdeaManager">Enable Public Idea Manager</label>&nbsp;&nbsp;
-				<input id='enableStudentAssetUploader' name="enableStudentAssetUploader" type="checkbox"></input><label for="enableStudentAssetUploader">Enable Student File Uploads</label>&nbsp;&nbsp;
-
-			</td>
-		</tr>
-		<tr>
-			<td colspan='2'>
-				<div class='featureSettings' id='ideaManagerSettings'>
-					<form id='imSettings'>
-						<h5>Idea Manager Settings</h5>
-						<div class='setting'>
-							<div class='settingLabel'><span>Idea Attributes</span>
-								<span class='details'>Specify up to three (3) additional attributes (data fields) for each idea in this project</span>
-								<img src='images/icons/teal/question.png' alt='More Information' class='tooltip' tooltip-maxW='300px' data-i18n-title='authoring_imsettings_attribute_help' />
-							</div>
-							<p class='warning' style='font-size:.85em;'>WARNING: If this project is currently running in a classroom, changing idea attributes WILL result in student data loss. Be careful!</p>
-							<table id='ideaAttributes'>
-								<tr>
-									<td class='attribute required'>
-										<h6>Text<span class='details'>(Required)</span><span class='action'><img src='images/icons/red/lock.png' alt='locked' class='tooltip' data-i18n-title='authoring_imsettings_text_required' tooltip-anchor='top' /></span></h6>
-										<p>Students type the text of their idea into a textbox.</p>
-										<p>A maximum of 150 characters is allowed per idea.</p>
-									</td>
-									<td class='attribute empty'></td>
-									<td class='attribute empty'></td>
-									<td class='attribute empty'></td>
-								</tr>
-							</table>
-						</div>
-						<div class='setting'>
-							<div class='settingLabel'><span>Labels & Terminology</span>
-								<span class='details'>Optional: Customize the names of Idea Manager components for this project</span>
-								<img src='images/icons/teal/question.png' alt='More Information' class='tooltip' tooltip-maxW='300px' data-i18n-title='authoring_imsettings_terminology_help' />
-							</div>
-							<ul class='inline'>
-								<li>Term for "idea": <input type='text' id='imIdeaTerm' name='imIdeaTerm' class='required' minlength='2' maxlength='20' /></li>
-								<li>Term for "idea" (plural): <input type='text' id='imIdeaTermPlural' name='imIdeaTermPlural' class='required' minlength='2' maxlength='20' /></li>
-								<li>Term for "Idea Basket": <input type='text' id='imBasketTerm' name='imBasketTerm' class='required private' minlength='2' maxlength='30' /></li>
-								<li class="public">Term for "Private Idea Basket": <input type='text' id='imPrivateBasketTerm' name='imPrivateBasketTerm' class='required public' minlength='2' maxlength='30' /></li>
-								<li class="public">Term for "Public Idea Basket": <input type='text' id='imPublicBasketTerm' name='imPublicBasketTerm' class='required public' minlength='2' maxlength='30' /></li>
-								<li>Term for "Explanation Builder": <input type='text' id='imEBTerm' name='imEBTerm' class='required' minlength='2' maxlength='30' /></li>
-								<li>Text for "Add Idea" buttons: <input type='text' id='imAddIdeaTerm' name='imAddIdeaTerm' class='required' minlength='2' maxlength='20' /></li>
-							</ul>
-						</div>
-					</form>
+<body id="w4-author">
+  <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6.
+       chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+	<div id="author-body">
+		<header>
+			<div class="content">
+				<div id="logo">
+					<img alt="logo" src="images/logo/WISE-logo-icon-60x54.png">
+					<span class="logoText" data-i18n="authoring_page_title"></span>
 				</div>
-			</td>
-		</tr>
-		<tr><td colspan="2">Teaching Tips:</td></tr>
-		<tr><td colspan="2"><textarea class="size4" id='projectMetadataLessonPlan'></textarea></td></tr>
-		<tr><td colspan="2">Learning Goals and Standards:</td></tr>
-		<tr><td colspan="2"><textarea class="size4" id='projectMetadataStandards'></textarea></td></tr>
-		</table>
+				
+				<div id="globalTools" class="toolbar">
+					<ul>
+						<li id="openProject">
+							<a id="openProjectLink" href="javascript:void(0);" data-i18n="authoring_open_project"></a>
+						</li>
+						
+						<li id="newProject" class="menuGroup">
+							<a id="newProjectLink" href="javascript:void(0);" data-i18n="authoring_new_project"></a>
+						</li>
+						
+						<li id="signOutLinks" class="menuGroup">
+							<a id="exitLink" href="/webapp/teacher/index.html" data-i18n="authoring_exit"></a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</header>
+		
+		<div id="pageContent" class="content">
+			<section id="projectWelcome" class="contentPanel">
+				<div class="panelContent">
+					<h1 class="panelHeader">
+						<span data-i18n="authoring_welcome_header_text"></span><span id="userName"></span>
+						<span class="pageTitle" data-i18n="authoring_welcome_header_info"></span>
+					</h1>
+					<div id="recent">
+						<h3 data-i18n="authoring_welcome_recent_header"></h3>
+					</div>
+					<div id="families">
+						<ul>
+							<li id="myFavorites">
+								<h4 data-i18n="authoring_welcome_panel_favorites"></h4>
+								<span class="count"></span>
+							</li>
+							<li id="myOwned">
+								<h4 data-i18n="authoring_welcome_panel_owned"></h4>
+								<span class="count"></span>
+							</li>
+							<li id="myShared">
+								<h4 data-i18n="authoring_welcome_panel_shared"></h4>
+								<span class="count"></span>
+							</li>
+							<li id="myCreate">
+								<h4 data-i18n="authoring_welcome_panel_create"></h4>
+								<span class="familyDetails" data-i18n="authoring_welcome_panel_create_details"></span>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</section> <!--end of projectWelcome-->
+			
+			<section id="projectContent" class="contentPanel">
+				<div class="panelContent">
+					<div id="projectInfo">
+						<img id="projectThumb" class="projectThumb" />
+						<div id="editThumb"><div data-i18n="authoring_project_panel_edit_thumb"></div></div>
+						<div id="infoSummary">
+							<div class="panelHeader">
+								<a class="bookmark tooltip" href="javascript:void(0);" data-i18n-title="authoring_toggle_favorite_title" data-tooltip-offset="4" data-tooltip-anchor="bottom"></a>
+								<span id="projectTitle" class="inputDisplay tooltip" data-i18n-title="authoring_project_panel_edit_title" data-tooltip-offset="-2" data-tooltip-anchor="bottom"></span>
+								<span id="projectId"></span>
+								<div id="topProjectTools">
+									<a id="previewProject" href="javascript:void(0);"><img alt="Preview Project" src="images/icons/svg/teal/screen.svg" /><span data-i18n='authoring_project_panel_preview'></span></a>
+								</div>
+							</div>
+							<div id="frontDetails">
+								<div>
+									<span class="sectionLabel" data-i18n="authoring_project_panel_stepTerm"></span>
+									<input type='text' name='stepTerm' data-i18n-title='authoring_project_panel_stepTerm_title' id='stepTerm' size='8'/>
+									<label for="stepTerm" data-i18n="authoring_label_singular"></label>
+									<input type='text' name='stepTermPlural' data-i18n-title='authoring_project_panel_stepTermPlural_title' id='stepTermPlural' size='8'/>
+									<label for="stepTermPlural" data-i18n="authoring_label_plural"></label>
+									<span class="sectionLabel" data-i18n="authoring_project_panel_activityTerm"></span>
+									<input type='text' name='activityTerm' data-i18n-title='authoring_project_panel_activityTerm_title' id='activityTerm' size='12'/>
+									<label for="activityTerm" data-i18n="authoring_abel_singular"></label>
+									<input type='text' name='activityTermPlural' data-i18n-title='authoring_project_panel_activityTermPlural_title' id='activityTermPlural' size='12'/>
+									<label for="activityTermPlural" data-i18n="authoring_label_plural"></label>
+									<label class="sectionLabel" for="currentTheme" data-i18n="authoring_project_panel_theme_label"></label>
+									<a id="changeTheme" href="javascript:void(0);" class="tooltip" data-i18n-title="authoring_project_panel_edit_theme" href="#nopath"><span id="currentTheme"></span> - <span id="currentNavMode"></span></a>
+									<div class="right sectionLabel">
+										<span id="summaryDetails"></span>
+										<a id='moreDetails' href="javascript:void(0);" data-i18n='authoring_project_panel_more_info'></a>
+									</div>
+								</div>
+								<div>
+									<div id="featureToggles">
+									<span class="sectionLabel" data-i18n="authoring_project_panel_features"></span>
+										<div class="featureToggle">
+											<label for="enableIM" data-i18n='idea_manager'></label>
+											<img src='images/icons/svg/teal/info.svg' alt='Idea Manager Help' class='tooltip help' data-tooltip-class='info' data-tooltip-anchor='bottom' data-tooltip-keep='true' data-tooltip-event="click" data-i18n-title='help_authoring_ideamanager_info' />
+											<input type="checkbox" id="enableIM" name="enableIM" class="metaInfo" data-field="isIdeaManagerEnabled" />
+											<a id="imSettingsEdit" href="javascript:void(0);" data-i18n="settings"></a>
+										</div>
+										<div class="featureToggle">
+											<label for="enableUpload" data-i18n="student_uploader"></label>
+											<img src='images/icons/svg/teal/info.svg' alt='Student Upoader Help' class='tooltip help' data-tooltip-class='info' data-tooltip-anchor='bottom' data-tooltip-keep='true' data-tooltip-event="click" data-i18n-title='help_authoring_studentuploader_info' />
+											<input type="checkbox" id="enableUpload" name="enableUpload" class="metaInfo" data-field="isStudentAssetUploaderEnabled" />
+										</div>
+									</div>
+									<div id="currentUsers" class="right sectionLabel"></div>
+									<!-- TODO: move to advanced settings <div id="loggingLevel">
+										<label for="loggingToggle" data-i18n="authoring_project_panel_logging_label"></label>
+										<img src='images/icons/svg/teal/info.svg' alt='Logging Level Help' class='tooltip help' data-tooltip-class='info' data-tooltip-anchor=bottom data-tooltip-keep='true' data-tooltip-event="click" data-i18n-title='help_authoring_logginglevel_info' />
+										<input type="checkbox" checked="checked" id="loggingToggle" name="loggingToggle" />
+									</div> -->
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<div id="projectStructure">
+						<div class="contentWrapper">
+				
+							<!-- <div id="authorHeader" style="display:none;">
+							
+								 <div id="toolsAreaAuthor">
+								    <dl class="dropdownAuthor">
+								        <dt id="one-ddheader" onmouseover="ddMenu('one',1);" onmouseout="ddMenu('one',-1);">
+								            <span id="menuTitle">
+								                extras
+								            </span>
+								            <img src="images/go-down.png" alt="Menu Arrow" width="15" height="14" border="0" />
+								        </dt>
+								        <dd id="one-ddcontent" onmouseover="cancelHide('one');" onmouseout="ddMenu('one',-1);" onmouseup="ddMenu('one',-1);">
+								            <ul>
+								     
+								                <li style="text-decoration:line-through;"><a onclick="" id="importNodeButton">
+								                <img src="images/importNode.png" alt="import step icon"  />Import an Activity or Step<br/>(from Library, Custom, or Shared project)</a></li> -->
+								
+								                <!--
+								         	    <li style="text-decoration:line-through;"><a onclick="" class="underline"><img src="images/shareProject.png"
+												alt="share project icon"  />Share Project</a></li>	
+												-->
+										
+											<!--<td><a onclick="eventManager.fire('createNewProject')" id="createProjectButton"><img src="images/createProject.png" alt="create project icon" />
+											Create Project</a></td>-->
+								
+											<!--<td><a onclick='eventManager.fire("copyProject")' id='copyProjectButton'><img src="images/copyProject.png" alt="create project icon" />
+											Copy Project</a></td>-->
+											
+											<!--<li id='editProjectTagsMenu' style='display:none;'><a onclick='eventManager.fire("editProjectTags")'>Add/Edit project tags</a></li>-->
+								
+											<!--<li><a onclick="eventManager.fire('uploadAsset')"><img src="images/uploadArt.png" alt="Upload Art/Files" />
+											Upload Art/Files</a></li>-->
+										
+											<!--<li><a onclick="eventManager.fire('viewAssets')"><img src="images/manageArt.png" alt="Manage Art/Files" />
+											Manage Art/Files</a></li>-->
+										
+											<!--<li><a onclick='eventManager.fire("useSelected")' id='useButton'>
+												<img src="images/link_copy2.png" alt="Mirror Copy Selected Item(s)" />Mirror Selected Step<br/>(make data-clone of selected step)</a></li>-->
+								
+											<!-- <li><a onclick="eventManager.fire('startCreateReviewSequence', 'Peer')"><img src="images/manageArt.png" alt="Create Peer Review Sequence" />
+											Create Peer Review Sequence</a></li>
+											
+											<li><a onclick="eventManager.fire('startCreateReviewSequence', 'Teacher')"><img src="images/manageArt.png" alt="Create Teacher Review Sequence" />
+											Create Teacher Review Sequence</a></li>
+											
+										<div id="listTitle">Advanced Users Only</div>
+										
+										<li><a onclick="view.openPremadeComments()"><img src="images/constraint.png" alt="find broken links in project" />Open Premade Comments for Project</a></li>
+										
+										<li><a onclick="eventManager.fire('findBrokenLinksInProject')"><img src="images/constraint.png" alt="find broken links in project" />Find Broken Links in Project</a></li>
+						
+										<li><a onclick="eventManager.fire('findUnusedAssetsInProject')"><img src="images/constraint.png" alt="find unused assets in project" />Find Unused Assets in Project</a></li>
+										
+										<li><a onclick="eventManager.fire('deleteProject')"><img src="images/constraint.png" alt="delete project" />Delete Project</a></li>
+										
+										<li><a onclick="eventManager.fire('cleanProject')"><img src="images/edit-clear.png" alt="clean project" />Clean Project</a></li>
+										
+										 <li><a onclick="eventManager.fire('editProjectFile')"><img src="images/document-properties.png"
+										alt="edit project file icon" />Edit Project Data File</a></li>
+										
+										<li><a onclick="eventManager.fire('authorConstraints')"><img src="images/constraint.png" alt="author constraints icon"/>Author
+										Student Navigation Constraints</a></li> -->
+										
+										<!--  
+										<li><a onclick="view.updateAudio()" ><img src="images/textToSpeech.png"
+										alt="generate Text to Speech"  />Text to Speech Audio</a></li>
+							            -->
+							
+										<!-- <li><a onclick="eventManager.fire('exportProject')" ><img src="images/copyProject.png"
+										alt="Download Project as Zip File"  />Download Project</a></li>
+							            			
+										<li><a class='last' onclick="eventManager.fire('reviewUpdateProject')" ><img src="images/constraint.png"
+										alt="Update Project"  />Update Project</a></li> -->
+										
+										<!-- 
+										        <li><a onclick="eventManager.fire('importProject')" id="importProjectButton"><img
+										src="images/importProject.png" alt="import project icon"  />Restore Project</a></li>
+										 -->
+											    <!-- 	<li><a onclick="eventManager.fire('retrieveArchive')" id="retrieveArchiveButton">Retrieve Archived Project</a></li>  -->
+										
+										        <!--  <li><a onclick='eventManager.fire("createTODOTask")' id='createTODOTaskLI'>Create TODO Task</a></li>  -->
+										        
+										        <!--  <li><a onclick='eventManager.fire("editTODOTasks")' id='editTODOTasksLI'>Edit TODO Tasks</a></li>  -->
+										        
+								           <!--  </ul>
+								        </dd>
+								    </dl>
+								</div>
+							                
+							</div>  -->  <!--end of div  authorHeader-->
+					
+						<!-- <div id="currentProjectContainer">
+							<div id="currentProjectContent" style="display:none;">
+								<div id='projectTitle'>Project Title: 
+									<input type="text" id='projectTitleInput' title='Click to Edit Project Title' size='40' onchange='eventManager.fire("projectTitleChanged")'/>
+									<a id='editProjectTitle' onclick='$("#projectTitleInput").focus();' title='Edit Project Title'>Edit</a>
+									<div id='projectID'>ID:&nbsp;<span id='projectIdDisplay'></span></div>
+									<div id='projectModeDiv'><span>Simple Mode</span><a id='toggleMode' onclick='eventManager.fire("toggleProjectMode")' title='Toggle Project Mode (Simple or Advanced)'>Toggle</a></div>
+								</div>
+								<div id='notificationDiv'></div> -->
+									<!-- this modal div appears to display instructional messages to the user while MOVING item(s) -->
+								<!-- <div id='selectModeDiv' style="display:none;">
+									<div id='selectModeSpan'><span id='selectModeMessage'></span><a onclick='eventManager.fire("disengageSelectMode","-1")'>Cancel</a></div>
+								</div>
+								<div id="concurrentAuthorDiv"></div>
+							</div>
+					
+							<div id='projectTools' style="display:none;">
+								<div id='selectNodeTools'>
+									<button class='first' title='Select All Steps & Activities' onclick='eventManager.fire("selectAll");'><span class='tool-icon-left action-icon action-icon-select'></span><span class='tool-label'>Select All</span></button>
+									<button class='last' title='Deselect All Steps & Activities' onclick='eventManager.fire("clearAll");'><span class='tool-icon-left action-icon action-icon-deselect'></span><span class='tool-label'>Select None</span></button>
+								</div>
+								<div id='createNodeTools'>
+									<button id='newSequence' class='first' title='Add New Activity to Project' onclick='eventManager.fire("createNewSequence");'><span class='tool-icon action-icon action-icon-new2'></span><span class='tool-label'>Add Activity</span></button>
+									<button id='newNode' class='last' title='Add New Step to Project' onclick='eventManager.fire("createNewNode");'><span class='tool-icon action-icon action-icon-new'></span><span class='tool-label'>Add Step</span></button>
+								</div>
+								<div id='editNodeTools'>
+									<button id='moveSelected' disabled='true' class='first' title='Move Selected Items' onclick='eventManager.fire("moveSelected");'><span class='tool-icon action-icon action-icon-move action-icon-inactive'></span><span class='tool-label'>Move</span></button>
+									<button id='duplicateSelected' disabled='true' class='mid' title='Duplicate Selected Items' onclick='eventManager.fire("duplicateSelected");'><span class='tool-icon action-icon action-icon-copy action-icon-inactive'></span><span class='tool-label'>Duplicate</span></button>
+									<button id='useButton' disabled='true' class='mid' title='Mirror Selected Step (Make Data Clone)' onclick='eventManager.fire("useSelected");' ><span class='tool-icon action-icon action-icon-clone action-icon-inactive'></span><span class='tool-label'>Mirror</span></button>
+									<button id='deleteSelected' disabled='true' class='last' title='Delete Selected Items' onclick='eventManager.fire("deleteSelected");'><span class='tool-icon action-icon action-icon-delete action-icon-inactive'></span><span class='tool-label'>Delete</span></button>
+								</div>
+								<div id='tagTools'>
+									<button id='displayTagView' title='Tags' onclick='eventManager.fire("displayTagView");'><span class='tool-icon action-icon action-icon-copy action-icon-inactive'></span><span class='tool-label'>Tags</span></button>
+								</div>
+								<div id='importTools'>
+									<button id='displayImportView' title='Import' onclick='eventManager.fire("displayImportView");'><span class='tool-icon action-icon action-icon-copy action-icon-inactive'></span><span class='tool-label'>Import</span></button>
+								</div>
+								<div id='visibiltyNodeTools'>
+									<button id='hideNodesBtn' title='Hide All Steps in Project' onclick='eventManager.fire("hideNodes");'><span class='tool-icon action-icon action-icon-hide'></span><span class='tool-label'>Hide Steps</span></button>
+									<button id='showNodesBtn' title='Show All Steps in Project' onclick='eventManager.fire("unhideNodes");' class='hidden'><span class='tool-icon action-icon action-icon-show'></span><span class='tool-label'>Show Steps</span></button>
+								</div> -->
+								<!--<td><div id='projectTasks' class='taskInfo' style='display: none;' onMouseOver='eventManager.fire("showTaskBox","project")' onMouseOut='eventManager.fire("hideTaskBox")'>Project Tasks</div></td>
+								<td><div id='userTasks' class='taskInfo' style='display: none;' onMouseOver='eventManager.fire("showTaskBox","users")' onMouseOut='eventManager.fire("hideTaskBox")'>User Tasks</div></td>-->
+							<!-- </div> -->
+								<div id="authoringContainer">
+									<div id="dynamicProject" class="projectComponent">
+										<h3 id="activeHeader">
+											<span data-i18n="authoring_project_content_active"></span>
+											<span class="details" data-i18n="authoring_project_content_active_info"></span>
+											<a class="right scroll" href="#inactiveHeader"><span data-i18n="authoring_project_content_view_inactive"></span><span class="ui-icon ui-icon-triangle-1-s"></span></a>
+										</h3>
+										<ul id="activeContainer" class="sequenceContainer"></ul>
+										<h3 id="inactiveHeader">
+											<span data-i18n="authoring_project_content_inactive"></span>
+											<span class="details" data-i18n="authoring_project_content_inactive_info"></span>
+											<a class="right scroll" href="#activeHeader"><span data-i18n="authoring_project_content_view_active"></span><span class="ui-icon ui-icon-triangle-1-n"></span></a>
+										</h3>
+										<ul id="inactiveContainer" class="sequenceContainer"></ul>
+									</div>
+									<div id="sequenceEditor" class="projectComponent">
+										<h3>
+											<span id="currentSequence"></span>
+											<a id="prevSequence" href="javascript:void(0);" class="left"></a>
+											<a id="nextSequence" href="javascript:void(0);" class="right"></a>
+										</h3>
+										<section class="projectPanel sequenceContents">
+											<div id="sequenceContent"></div>
+										</section>
+									</div>
+								</div>
+						<!-- </div> -->
+					</div> <!-- end of contentWrapper -->
+					<div id="projectTools" class="projectPanel">
+						<div class="panelHeader" data-i18n="authoring_project_tools_header"></div>
+						<section class="center">
+							<p><a class="submit small" id="newSequence" onclick="eventManager.fire('createNewSequence')"><img alt="New Activity" src="/vle/images/icons/svg/white/new.svg" /><span data-i18n="authoring_project_tools_createActivity" ></span></a></p>
+						</section>
+						<section>
+							<p><a id="editInfo" href="javascript:void(0);"><img alt="Project Details" src="/vle/images/icons/svg/teal/form.svg" /><span data-i18n="authoring_project_panel_edit_info"></span></a></p>
+							<p><a id="manageFiles" href="javascript:void(0);"><img alt="Art and Files" src="/vle/images/icons/svg/teal/container.svg" /><span data-i18n="authoring_project_panel_manage_files"></span></a></p>
+							<p><a id="editTheme" href="javascript:void(0);"><img alt="Edit Theme" src="images/icons/svg/teal/wand.svg" /><span data-i18n="authoring_project_panel_edit_theme"></span></a></p>
+						</section>
+						<section>
+							<h5 data-i18n="authoring_project_tools_editStructure"></h5>
+							<p><a id="editOrder" href="javascript:void(0);"><img alt="Re-order Content" src="images/icons/svg/teal/reorder.svg" /><span data-i18n="authoring_project_panel_edit_order"></span></a></p>
+							<p>
+								<a id="editBranches" href="javascript:void(0);"><img alt="Create Branches" src="images/icons/svg/teal/branch.svg" /><span data-i18n="authoring_project_panel_edit_branches"></span></a>
+								<img id="metaHelp" src='images/icons/svg/teal/info.svg' alt='Branching Help' class='help tooltip' data-tooltip-class='info' data-tooltip-anchor='right' data-tooltip-keep='true' data-tooltip-event='click' data-i18n-title=''/>
+							</p>
+						</section>
+					</div>
+					<div id="author_messages"></div>
+					</div> <!-- end of projectStructure -->
+					<div class="overlay contentOverlay" id="projectOverlay"></div>
+					<div class="loading contentLoading" id="projectLoading">
+						<div class="loadingText" data-i18n="authoring_project_loading"></div>
+						<div><img src="images/loading.gif"/></div>
+					</div>
+				</div>
+			</section>   <!--end of projectContent-->
+		</div>	<!-- end of pageContent -->
 	</div>
-</div>
-</div>
-
-<div id='previousWorkDialog' style='display:none;'>
-<div class='hd'></div>
-<div id='previousWorkPanel' class='bd'>
-<div id='main'>
-	<div id='prompt'><br>SHOW PREVIOUS ASSESSMENT WORK:</b><BR/>
-	Move a Previous Assessment Step from right into left column by selecting an item and clicking the <i>Add</i> button. This will make the student's previous work appear in the introduction to the Current Assessment Step.</div></br>
-	<div id="currentStep">Current Assessment Step:&nbsp;<span id='nodeTitle'>currently selected step content auto-inserted here</span></div>
-	</br>
-	<table id='prevWorkTable' border='0'><thead></thead>
-		<tbody>
-			<tr>
-				<td id='toCol'>
-					Move a Previous Assessment Step here to make it appear in the introduction to the Current Assessment Step.</br></br>
-					<select id='selectTo' size='15' multiple='multiple'></select>
-				</td>
-				<td id='buttCol'>
-					<input type='button' value='&lt;-- Add' onclick='eventManager.fire("moveSelectedLeft")'></input></br></br>
-					<input type='button' value='Remove --&gt;' onclick='eventManager.fire("moveSelectedRight")'></input>
-				</td>
-				<td id='fromCol'>
-					Previous<br> Assessment Steps:</br></br>
-					<select id='selectFrom' size='15' multiple='multiple'></select>
-				</td>
-			</tr>
-		</tbody>
-	</table>
-</div>
-</div>
-</div>
-
-<div id='authorStepDialog' style="display:none;">
-	<div id='authorStepHeader' class='authorStepDialog'>
-		<table style='float:left;'>
-			<tr>
-				<td id='iconTD'><div id='iconDiv'></div></td>
-				<td>
-					Editor View:
-					<input type='radio' id='easyTrue' name='radioMode' onclick='eventManager.fire("authorStepModeChanged","true")'>Simple</input>
-					<input type='radio' id='easyFalse' name='radioMode' onclick='eventManager.fire("authorStepModeChanged","false")'/>Advanced</input>
-				</td>
-				<td id='refreshOptions'>
-					<input type='checkbox' id='refreshCheck' onclick='eventManager.fire("updateRefreshOption")' CHECKED>Refresh As Typing</input>
-					<input type='button' id='refreshButt' onclick='eventManager.fire("refreshNow")' value='Refresh Now'></input>
-					<input type='button' id='hintsButt' onclick='eventManager.fire("editHints",[0])' value='Edit Hints'></input>
-				</td>
-			</tr>
-		</table>
-		<div id="authorNavButtons" style='float:right'>
-			<input type='button' value='Save' onclick='eventManager.fire("saveStep")'/>
-			<input type='button' value='Save & Close' onclick='eventManager.fire("saveAndCloseStep")'/>
-			<input type='button' value='Close' onclick='eventManager.fire("closeStep")'/>
+	
+	<div id="createProjectDialog" class="dialog center">
+		<div id="createOr" data-i18n="authoring_or"></div>
+		<div id="newOption" class="option">
+			<h3 data-i18n="authoring_dialog_create_new_header"></h3>
+			<p data-i18n="authoring_dialog_create_nameinput"></p>
+			<p><input type='text' id='projectInput' class='required' minlength='2' maxlength='100'/></p>
+		</div>
+		<div class="option">
+			<h3 data-i18n="authoring_dialog_create_copy_header"></h3>
+			<p><a class="submit" data-i18n="authoring_dialog_create_copybutton" onclick="eventManager.fire('copyProject')"></a></p>
 		</div>
 	</div>
-	<div id='authorStepPanel' class='authorStepDialog'>
-		<table width='100%' height='100%'>
-			<tr>
-				<td id="dynamicParent" width='50%' style='height:100%;'><div id="dynamicPage"></div></td>
-				<td width='50%'><iframe id='previewFrame' width='99%' style='display: block; height: 100%;' name='previewFrame' onload='(typeof eventManager != "undefined" ? eventManager.fire("previewFrameLoaded") : false)'></iframe></td>
-			</tr>
-		</table>
+	
+	<div id='openProjectDialog' class="dialog">
+		<div id="projectTabs">
+			<div id="openProjectIntro">
+				<span data-i18n="authoring_or"></span>
+				<a class="submit" id="openCreateNew" data-i18n="authoring_project_create_new" onclick="eventManager.fire('createNewProject')"></a>
+			</div>
+			<ul id="familySelect">
+				<li><a id="favoriteTab" href="#favoriteProjects"></a></li>
+				<li><a id="ownedTab" href="#ownedProjects"></a></li>
+				<li><a id="sharedTab" href="#sharedProjects"></a></li>
+				<!-- <li><a id="allTab" href="#allProjects"></a></li>  -->
+				<li><a id="libraryTab" href="#libraryProjects"></a></li>
+			</ul>
+			<div class="projectList" id="favoriteProjects"></div>
+			<div class="projectList" id="ownedProjects"></div>
+			<div class="projectList" id="sharedProjects"></div>
+			<!-- <div class="projectList" id="allProjects"></div> -->
+			<div class="projectList" id="libraryProjects"></div>
+		</div>
+		<div class="overlay contentOverlay dialogOverlay" id="openProjectOverlay"></div>
+		<div class="loading contentLoading" id="openProjectLoading">
+			<div class="loadingText"></div>
+			<div><img src="images/loading.gif"/></div>
+		</div>
 	</div>
-	<div id='authorStepFooter' class='authorStepDialog'>
+	
+	<div id="projectStructureDialog" class="dialog">
+		<div id="structureTabs">
+			<ul id="structureSelect">
+				<li><a id="structureTab" href="#projectStructure" i18n=""></a></li>
+				<li><a id="importTab" href="#importContent" i18n=""></a></li>
+			</ul>
+				<div id="projectStructureHeader" class="settingsHeader"></div>
+				<div id="projectContent">
+					<h5>Active Content</h5>
+					<ul id="activeContent" class="sequenceItem"></ul>
+					<h5>Inactive Content</h5>
+					<ul id="inactiveContent" class="sequenceItem"></ul>
+				</div>
+				<div id="importContent"></div>
+		</div>
 	</div>
-</div>
-
-<div id='nodeSelectorDialog' style='display:none;'>
-<div class='hd'></div>
-<div class='bd'>
-	<div id='nodeSelectorInstructionsDiv'>
-		Select a step from the list of steps below that you want to link to, then select a color for that link and then click 'Select Step'. The steps in the step list appear in the order that they do in the project. 
+	
+	<div id='createSequenceDialog' class="dialog">
+	<div class='hd'>Please enter a UNIQUE name for the new Activity:</div>
+	<div class='bd'>
+		<input type='text' size='40' id='createSequenceInput' /><br/>
 	</div>
-	<div id='nodeSelectDiv'>
 	</div>
-</div>
-</div>
-
-<div id='studentResponseBoxSizeDiv' style='display:none;'>
-	Size of Student Response Box (# rows):
-	<input id='studentResponseBoxSizeInput' type='text' onkeyup='eventManager.fire("stepStudentResponseBoxSizeChanged")'></input>
-</div>
-
-<div id='richTextEditorToggleDiv' style='display:none;'>
-	Use Rich Text Editor
-	<input id='richTextEditorToggleInput' type='checkbox' onchange='eventManager.fire("stepRichTextEditorToggleChanged")'></input>
-</div>
-
-<div id='starterSentenceAuthoringDiv' style='display:none;'>
-	<input type='radio' name='starterRadio' onclick='eventManager.fire("stepStarterSentenceAuthoringOptionChanged")' value='0'/> Do not user starter sentence <br/>
-	<input type='radio' name='starterRadio' onclick='eventManager.fire("stepStarterSentenceAuthoringOptionChanged")' value='1'/> Starter sentence available upon request <br/>
-	<input type='radio' name='starterRadio' onclick='eventManager.fire("stepStarterSentenceAuthoringOptionChanged")' value='2'/> Starter sentence shows immediately <br/>
-	Starter sentence: <textarea id='starterSentenceAuthoringInput' cols='60' rows='4' wrap='soft' onchange='eventManager.fire("stepStarterSentenceAuthoringSentenceChanged")'></textarea>
-</div>
-
-<div id='promptDiv' class='authoringComponent' style='display:none;'>
-	<textarea id='promptInput' name='promptInput' cols='85' wrap='hard' onkeyup="eventManager.fire('stepPromptChanged')"></textarea>
-</div>
-
-<div id='linkContainer' style='display:none;'>
-<div id='linkDiv'>
-	<div id='instructionDiv'>
-		To create a link to another step within this project, highlight the text you want the students to click on, then click the 'Create New Link' button.
-	</div><br/>
-	Existing Links:
-	<div id='existingLinksDiv'></div><br/>
-	<div id='buttonDiv'>
-		<input type='button' value='Create New Link' onclick='eventManager.fire("createLink")'></input>
+	
+	<div id='createNodeDialog' class="dialog">
+	<div class='bd'>
+		<div id='createNodeDiv'>
+			<label for='createNodeTitle'>Create Step Title:</label>
+			<input type='text' size='40' id='createNodeTitle'/><br/>
+			
+			<label for='createNodeType'>Select Step Type:</label> 
+			<select id='createNodeType' onchange='eventManager.fire("nodeTypeSelected");'>
+				<option value=""></option>
+			</select>
+			<a onclick='eventManager.fire("openStepTypeDescriptions")' style='color:blue;text-decoration:underline'>Step Type Descriptions</a>
+			<br/>
+		</div>
 	</div>
-</div>
-</div>
-
-<div id='cRaterDiv' style='display:none;'>
-	Enable CRater <input id='enableCRaterCheckbox' name='enableCRaterCheckbox' type='checkbox' onclick='eventManager.fire("enableCRater")' />
-	<div id='cRaterSettingsDiv' style='display:none;'>
-		Type: <input id='cRaterItemTypeCRATER' name='cRaterItemTypeCheckbox' type='radio' value='cRaterItemTypeCRATER' checked='checked' onclick='eventManager.fire("cRaterItemTypeChanged", ["CRATER"])' />CRater
-		<input id='cRaterItemTypeHENRY' name='cRaterItemTypeCheckbox' type='radio' value='cRaterItemTypeHENRY' onclick='eventManager.fire("cRaterItemTypeChanged", ["HENRY"])' />HENRY
-		<br>
-		CRater Item Id: <input id='cRaterItemIdInput' name='cRaterItemIdInput' type='text' size=15 onkeyup='eventManager.fire("cRaterItemIdChanged")' /> <input id='cRaterVerifyButton' type='button' value='Verify' onclick="eventManager.fire('cRaterVerify')"/> <div id='cRaterItemIdStatus' style='display:inline'></div>
-		<br>
-		Display CRater Score to Student <input id='cRaterDisplayScoreToStudent' name='cRaterDisplayScoreToStudent' type='checkbox' onclick='eventManager.fire("cRaterDisplayScoreToStudentChanged")' />
-		<br>
-		Display CRater Feedback to Student <input id='cRaterDisplayFeedbackToStudent' name='cRaterDisplayFeedbackToStudent' type='checkbox' onclick='eventManager.fire("cRaterDisplayFeedbackToStudentChanged")' />
-		<br>
-		Must Submit and Revise Before Exit <input id='cRaterMustSubmitAndReviseBeforeExit' name='cRaterMustSubmitAndReviseBeforeExit' type='checkbox' onclick='eventManager.fire("cRaterMustSubmitAndReviseBeforeExitChanged")' />
-		<br>
-		CRater Max Check Answers <input id='cRaterMaxCheckAnswers' name='cRaterMaxCheckAnswers' type='text' size=5 onkeyup='eventManager.fire("cRaterMaxCheckAnswersChanged")' />
-		<br>
-		<div id='cRaterFeedback'></div>
 	</div>
-</div>
-
-<div id='cleanProjectDialog' style='display:none;'>
-<div class='hd'></div>
-<div id='cleanProjectPanel' class='bd'>
-	<div id='cleanProjectTitleDiv'><h3>Project Cleaning Results</h3></div><br/>
-	<div id='cleanProjectResultsDiv'>
-		<div id='cleanProjectResultsText'>Analyzing...</div><br/>
-		<table id='cleanProjectTable'>
-			<thead id='cleanProjectTableHead'>
-			</thead>
-			<tbody id='cleanProjectTableBody'>
+	
+	<div id="editTitleDialog" class="dialog center">
+		<h3 data-i18n="authoring_dialog_title_nameinput"></h3>
+		<form id="titleForm" onsubmit="return false;">
+			<p><input type='text' id='titleInput' class='required' minlength='2' maxlength='100'/></p>
+		</form>
+	</div>
+	
+	<div id="editProjectFileDialog" class="dialog">
+		<div class='hd'>Edit Project File</div>
+		<div class='bd'>
+			 <div id='editProjectDiv'> 
+			 	<textarea id='projectText' cols='110' rows='32' wrap='hard' name='param3' /></textarea>
+			 </div><br/>
+		</div>
+	</div>
+	
+	<div id='assetEditorDialog' class="dialog">
+		<div class='featureSettings'>
+			<div class="settingsHeader">
+				<span id="assetsHeader"></span>
+				<div id="assetUsage" class="details">
+					<div id="sizeDiv"></div>
+					<div id="sizeBar"></div>
+					<img id="assetsHelp" src='images/icons/svg/teal/info.svg' alt='File Manager Help' class='help' />
+				</div>
+			</div>
+			<div class="setting" id="assetUploadWrapper">
+				<div id="assetUpload">
+					<input id="uploadFile" data-i18n="authoring_dialog_assets_upload_link" type="button" />
+				</div>
+				<div id="assetNotify">
+					<div id="uploadDrop" class="show">
+						<span data-i18n="authoring_dialog_assets_upload_dropzone"></span>
+						<div id="uploadDropArea"></div>
+					</div>
+					<div id="uploadsWrapper"></div>
+				</div>
+				<div style="clear:both;"></div>
+			</div>
+			<div class="setting" id="assetsWrapper">
+				<!-- <select id='assetSelect' size='10'></select> -->
+				<div id="assets">
+					<table id="assetSelect" class="wisetable scroll left">
+						<thead>
+							<tr>
+								<th><input id="assetSelectAll" type="checkbox" /></th>
+								<th data-i18n="filename" style="max-width:200px;"></th>
+								<th data-i18n="size"></th>
+								<th data-i18n="modified"></th>
+								<th data-i18n="authoring_dialog_assets_table_used"></th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+					<div class="overlay" id="assetsOverlay">
+						<div id="assetsLoading">
+							<img class="loadingImg" alt="loading..." src="images/ajax-loader.gif" />
+						</div>
+					</div>
+				</div>
+				<div id="previewAsset">
+					<div id="previewHeader"><h6 data-i18n="authoring_dialog_assets_preview_header"></h6></div>
+					<div id="previewContent"></div>
+					<div id="previewDetails">
+						<div id="previewDimensions">&nbsp</div>
+						<div id="previewActions">
+							<a id="assetView" href="javascript:void(0);" data-i18n="authoring_dialog_assets_view"></a>
+							<a id="assetDownload" href="javascript:void(0);" data-i18n="authoring_dialog_assets_download"></a>
+							<a id="assetDelete" href="javascript:void(0);" data-i18n="authoring_dialog_assets_delete"></a>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="setting">
+				<div id="uploaderInstructions">
+					<p data-i18n="authoring_dialog_assets_ref_path"></p>
+				</div>
+			</div>
+		</div>
+		<div id="assetNotifications" class="notifications"></div>
+	</div>
+	
+	<div id='contextMenu' class='contextMenu' style='display:none;'></div> <!-- TODO: remove -->
+	
+	<div id='editProjectMetadataDialog' class="dialog">
+		<form id="projectMetadata">
+			<div class="featureSettings">
+				<div class="settingsHeader">
+					<span id="metaHeader"></span>
+					<div class="details">
+						<img id="metaHelp" src='images/icons/svg/teal/info.svg' alt='File Manager Help' class='help tooltip' data-tooltip-class='info' data-tooltip-anchor='left' data-tooltip-keep='true' data-tooltip-event='click' data-i18n-title='help_authoring_meta_general_info'/>
+					</div>
+				</div>
+				<div class="setting">
+					<div class="settingLabel"><span data-i18n="authoring_dialog_meta_setting_basic"></span></div>
+					<div>
+						<p>
+							<label for="projectMetadataTitle" data-i18n="authoring_dialog_meta_field_title"></label>
+							<input type='text' id='projectMetadataTitle' name='projectMetadataTitle' data-i18n-placeholder='authoring_dialog_meta_field_title_placeholder' class='required' minlength='2' maxlength='100' />
+						</p>
+						<p>
+							<label data-i18n="authoring_dialog_meta_field_owner"></label>
+							<span>
+								<span id='projectOwner'></span>
+							</span>
+						</p>
+						<p id="originalAuthorDisplay">
+							<label data-i18n="authoring_dialog_meta_field_author"></label>
+							<span>
+								<span id='projectMetadataAuthor'></span>
+								<img src='images/icons/svg/teal/question.svg' alt='More Information' class='tooltip help' data-tooltip-class='info' data-tooltip-anchor='right' data-tooltip-keep='true' data-tooltip-event='click' data-i18n-title='help_authoring_meta_author_info' />
+							</span>
+						</p>
+						<p id="sharedUsersDisplay">
+							<label data-i18n="authoring_dialog_meta_field_sharedUsers"></label>
+							<span>
+								<span id='projectSharedUsers'></span>
+							</span>
+						</p>
+						<!-- TODO: add link to share with others and root project info perhaps -->
+						<p>
+							<label for="projectMetadataContact" data-i18n="authoring_dialog_meta_field_contact"></label>
+							<input type='text' id='projectMetadataContact' name='projectMetadataContact' data-i18n-placeholder='authoring_dialog_meta_field_contact_placeholder' minlength='2' maxlength='255' />
+						</p>
+						<p style="display:none;"> <!-- TODO: move to separate theme chooser -->
+							<label>Theme:</label>
+							<select name="theme" id="projectMetadataTheme"></select>
+							<select name="navMode" id="projectMetadataNavigation"></select>
+						</p>
+						<p>
+							<!-- TODO: Perhaps load these options programmatically based on vle config? -->
+							<span class="inline-block">
+								<label for="projectMetadataSubject" data-i18n="authoring_meta_subject_label"></label>
+								<select name="projectMetadataSubject" id="projectMetadataSubject" class="required">
+									<option value='Life Science' data-i18n='authoring_meta_subject_options_lifescience'></option>
+									<option value='Physical Science' data-i18n='authoring_meta_subject_options_physicalscience'></option>
+									<option value='Earth Science' data-i18n='authoring_meta_subject_options_earthscience'></option>
+									<option value='General Science' data-i18n='authoring_meta_subject_options_generalscience'></option>
+									<option value='Biology' data-i18n='authoring_meta_subject_options_biology'></option>
+									<option value='Chemistry' data-i18n='authoring_meta_subject_options_chemistry'></option>
+									<option value='Physics' data-i18n='authoring_meta_subject_options_physics'></option>
+									<option value='WISE Research' data-i18n='authoring_meta_subject_options_wiseresearch'></option>
+									<option value='Other' data-i18n='select_option_other'></option>
+									<option selected id='subjectAll' disabled="disabled" value='' data-i18n="select_option_choose"></option>
+								</select>
+							</span>
+							<span class="inline-block">
+								<label for="projectMetadataGradeRange" data-i18n="authoring_meta_grade_label"></label>
+								<select name="projectMetadataGradeRange" id="projectMetadataGradeRange" class="required">
+									<option selected disabled="disabled" value="" data-i18n="select_option_choose"></option>
+									<option value='3-5' data-i18n='authoring_meta_grade_options_3-5'></option>
+									<option value='6-8' data-i18n='authoring_meta_grade_options_6-8'></option>
+									<option value='9-12' data-i18n='authoring_meta_grade_options_9-12'></option>
+									<option value='6-12' data-i18n='authoring_meta_grade_options_6-12'></option>
+									<option value='12+' data-i18n='authoring_meta_grade_options_12+'></option>
+								</select>
+							</span>
+							<span class="inline-block">
+								<label for="projectMetadataLanguage" data-i18n="authoring_meta_language_label"></label>
+								<select name="projectMetadataLanguage" id="projectMetadataLanguage" class="required">
+									<option selected disabled="disabled" value="" data-i18n="select_option_choose"></option>
+									<option value='English' data-i18n='authoring_meta_language_options_english'></option>
+									<option value='Chinese' data-i18n='authoring_meta_language_options_chinese'></option>
+									<option value='Dutch' data-i18n='authoring_meta_language_options_dutch'></option>
+									<option value='French' data-i18n='authoring_meta_language_options_french'></option>
+									<option value='German' data-i18n='authoring_meta_language_options_german'></option>
+									<option value='Hebrew' data-i18n='authoring_meta_language_options_hebrew'></option>
+									<option  value='Japanese' data-i18n='authoring_meta_language_options_japanese'></option>
+									<option value='Korean' data-i18n='authoring_meta_language_options_korean'></option>
+									<option value='Spanish' data-i18n='authoring_meta_language_options_spanish'></option>
+									<option value='Other' data-i18n='select_option_other'></option>
+								</select>
+							</span>
+							<span class="inline-block">
+								<label for="projectMetadataTotalTime" data-i18n="authoring_meta_total_time_label"></label>
+								<select name="projectMetadataTotalTime" id="projectMetadataTotalTime" class="required">
+									<option selected disabled="disabled" value="" data-i18n="select_option_choose"></option>
+									<option value='0-2 hours' data-i18n='authoring_meta_time_options_0_2_hrs'></option>
+									<option value='2-3 hours' data-i18n='authoring_meta_time_options_2_3_hrs'></option>
+									<option value='4-5 hours' data-i18n='authoring_meta_time_options_4_5_hrs'></option>
+									<option value='6-7 hours' data-i18n='authoring_meta_time_options_6_7_hrs'></option>
+									<option value='8-9 hours' data-i18n='authoring_meta_time_options_8_9_hrs'></option>
+									<option value='10-11 hours' data-i18n='authoring_meta_time_options_10_11_hrs'></option>
+									<option value='Over 12 hours' data-i18n='authoring_meta_time_options_12+_hrs'></option>
+								</select>
+							</span>
+							<span class="inline-block">
+								<label for="projectMetadataTotalTime" data-i18n="authoring_meta_comp_time_label"></label>
+								<select name="projectMetadataCompTime" id="projectMetadataCompTime" class="required">
+									<option selected disabled="disabled" value="" data-i18n="select_option_choose"></option>
+									<option value='0-2 hours' data-i18n='authoring_meta_time_options_0_2_hrs'></option>
+									<option value='2-3 hours' data-i18n='authoring_meta_time_options_2_3_hrs'></option>
+									<option value='4-5 hours' data-i18n='authoring_meta_time_options_4_5_hrs'></option>
+									<option value='6-7 hours' data-i18n='authoring_meta_time_options_6_7_hrs'></option>
+									<option value='8-9 hours' data-i18n='authoring_meta_time_options_8_9_hrs'></option>
+									<option value='10-11 hours' data-i18n='authoring_meta_time_options_10_11_hrs'></option>
+									<option value='Over 12 hours' data-i18n='authoring_meta_time_options_12+_hrs'></option>
+								</select>
+							</span>
+						</p>
+					</div>
+				</div>
+				
+				<div class="setting">
+					<div class="settingLabel">
+						<span data-i18n="authoring_dialog_meta_setting_summary"></span>
+						<span class="details" data-i18n="authoring_dialog_meta_setting_summary_details"></span>
+					</div>
+					<div>
+						<p>
+							<textarea id='projectMetadataSummary' name='projectMetadataSummary' data-i18n-placeholder='authoring_dialog_meta_field_summary_placeholder' class='required' minlength='2' maxlength='255'></textarea>
+						</p>
+						<p>
+							<label for="projectMetadataKeywords" data-i18n="authoring_dialog_meta_field_keywords"></label>
+							<input type='text' id='projectMetadataKeywords' name='projectMetadataKeywords' data-i18n-placeholder='authoring_dialog_meta_field_keywords_placeholder' minlength='2' maxlength='255' />
+						</p>
+					</div>
+				</div>
+				
+				<div class="setting">	
+					<div class="settingLabel">
+						<span data-i18n="authoring_dialog_meta_setting_tips"></span>
+						<span class="details" data-i18n="authoring_dialog_meta_setting_tips_details"></span>
+					</div>
+					<div>
+						<p>
+							<textarea id='projectMetadataLessonPlan' name='projectMetadataLessonPlan' data-i18n-placeholder='authoring_dialog_meta_field_tips_placeholder' minlength='2' maxlength='2000'></textarea>
+						<p>
+					</div>
+				</div>
+					
+				<div class="setting">
+					<div class="settingLabel">
+						<span data-i18n="authoring_dialog_meta_setting_standards"></span>
+						<span class="details" data-i18n="authoring_dialog_meta_setting_standards_details"></span>
+					</div>
+					<div>
+						<p>
+							<textarea id='projectMetadataStandards' name='projectMetadataStandards' data-i18n-placeholder='authoring_dialog_meta_field_standards_placeholder' minlength='2' maxlength='2000'></textarea>
+						</p>
+					</div>
+				</div>
+					
+				<div class="setting">
+					<div class="settingLabel"><span data-i18n="authoring_dialog_meta_setting_tech"></span></div>
+					<div>
+						<p>
+							<label data-i18n="authoring_dialog_meta_field_tech_reqs"></label>
+							<input type="checkbox" name="projectMetadataTechFlash" value="flash" id="projectMetadataTechFlash"/><label for="projectMetadataTechFlash" data-i18n=authoring_meta_tech_options_flash></label>
+							<input type="checkbox" name="projectMetadataTechJava" value="java" id="projectMetadataTechJava"/><label for="projectMetadataTechJava" data-i18n="authoring_meta_tech_options_java"></label>
+							<input type="checkbox" name="projectMetadataTechQuickTime" value="quickTime" id="projectMetadataTechQuickTime"/><label for="projectMetadataTechQuickTime" data-i18n="authoring_meta_tech_options_quicktime"></label>
+						<p>
+						<p>
+							<label for="projectMetadataTechDetails" data-i18n="authoring_dialog_meta_field_tech_details"></label>
+							<textarea id='projectMetadataTechDetails' name='projectMetadataTechDetails' data-i18n-placeholder='authoring_dialog_meta_field_tech_placeholder' minlength='2' maxlength='255'></textarea>
+						</p>
+					</div>
+				</div>
+			</div>
+		</form>
+		<div id="metaNotifications" class="notifications"></div>
+	</div>
+	
+	<div id="editIMSettingsDialog" class="dialog">
+		<div class="featureSettings" id="ideaManagerSettings">
+			<div class="settingsHeader">
+				<input type="checkbox" id="enableIdeaManager" name="enableIdeaManager" data-field="isIdeaManagerEnabled" />
+				<label for="enableIdeaManager" data-i18n='authoring_dialog_im_enable'></label>
+				<div class="details">
+					<input id="enablePublicIdeaManager" name="enablePublicIdeaManager" type="checkbox" data-field="isPublicIdeaManagerEnabled"></input>
+					<label id="enablePublicIMLabel" for="enablePublicIdeaManager" data-i18n='authoring_dialog_im_enable_public'></label>
+				</div>
+			</div>
+			<form id='imSettings'>
+				<div class='setting'>
+					<div class='settingLabel'><span>Idea Attributes</span>
+						<span class='details'>Specify up to three (3) additional attributes (data fields) for each idea in this project</span>
+						<img src='images/icons/svg/teal/info.svg' alt='More Information' class='tooltip help' data-tooltip-class='info' data-tooltip-anchor='right' data-tooltip-keep='true' data-tooltip-event='click' data-i18n-title='help_authoring_imsettings_attribute' />
+					</div>
+					<p id='imRunWarning' class='warning'>WARNING: This project is part of a classroom run. Changing idea attributes can result in student data loss. Be careful!<img src='images/icons/svg/teal/question.svg' alt='More Information' class='tooltip help' data-tooltip-class='info' data-tooltip-anchor='right' data-tooltip-keep='true' data-tooltip-event='click' data-i18n-title='help_authoring_imsettings_run_warning' /></p> <!-- TODO: be more specific -->
+					<table id='ideaAttributes'>
+						<tr>
+							<td class='attribute required'>
+								<h6>Text<span class='details'>(Required)</span><span class='action'><img src='images/icons/red/lock.png' alt='locked' class='tooltip' data-i18n-title='authoring_imsettings_text_required' data-tooltip-maxw='200px' /></span></h6>
+								<p>Students type the text of their idea into a textbox.</p>
+								<p>A maximum of 150 characters is allowed per idea.</p>
+							</td>
+							<td class='attribute empty'></td>
+							<td class='attribute empty'></td>
+							<td class='attribute empty'></td>
+						</tr>
+					</table>
+				</div>
+				<div class='setting'>
+					<div class='settingLabel'><span>Labels & Terminology</span>
+						<span class='details'>Optional: Customize the names of Idea Manager components for this project</span>
+						<img src='images/icons/svg/teal/info.svg' alt='More Information' class='tooltip help' data-tooltip-class='info' data-tooltip-anchor='right' data-tooltip-event="click" data-i18n-title='help_authoring_imsettings_terminology' />
+					</div>
+					<ul class='inline-block'>
+						<li>Term for "idea": <input type='text' id='imIdeaTerm' name='imIdeaTerm' class='required' minlength='2' maxlength='20' /></li>
+						<li>Term for "idea" (plural): <input type='text' id='imIdeaTermPlural' name='imIdeaTermPlural' class='required' minlength='2' maxlength='20' /></li>
+						<li>Term for "Idea Basket": <input type='text' id='imBasketTerm' name='imBasketTerm' class='required' minlength='2' maxlength='30' /></li>
+						<li class="public">Term for "Private Idea Basket": <input type='text' id='imPrivateBasketTerm' name='imPrivateBasketTerm' class='required public' minlength='2' maxlength='30' /></li>
+						<li class="public">Term for "Public Idea Basket": <input type='text' id='imPublicBasketTerm' name='imPublicBasketTerm' class='required public' minlength='2' maxlength='30' /></li>
+						<li>Term for "Explanation Builder": <input type='text' id='imEBTerm' name='imEBTerm' class='required' minlength='2' maxlength='30' /></li>
+						<li>Text for "Add Idea" buttons: <input type='text' id='imAddIdeaTerm' name='imAddIdeaTerm' class='required' minlength='2' maxlength='20' /></li>
+					</ul>
+				</div>
+			</form>
+		</div>
+	</div>
+	
+	<div id='previousWorkDialog' class="dialog">
+		<div class='hd'></div>
+		<div id='previousWorkPanel' class='bd'>
+			<div id='main'>
+				<div id='prompt'><br>SHOW PREVIOUS ASSESSMENT WORK:</b><BR/>
+				Move a Previous Assessment Step from right into left column by selecting an item and clicking the <i>Add</i> button. This will make the student's previous work appear in the introduction to the Current Assessment Step.</div></br>
+				<div id="currentStep">Current Assessment Step:&nbsp;<span id='nodeTitle'>currently selected step content auto-inserted here</span></div>
+				</br>
+				<table id='prevWorkTable' border='0'><thead></thead>
+					<tbody>
+						<tr>
+							<td id='toCol'>
+								Move a Previous Assessment Step here to make it appear in the introduction to the Current Assessment Step.</br></br>
+								<select id='selectTo' size='15' multiple='multiple'></select>
+							</td>
+							<td id='buttCol'>
+								<input type='button' value='&lt;-- Add' onclick='eventManager.fire("moveSelectedLeft")'></input></br></br>
+								<input type='button' value='Remove --&gt;' onclick='eventManager.fire("moveSelectedRight")'></input>
+							</td>
+							<td id='fromCol'>
+								Previous<br> Assessment Steps:</br></br>
+								<select id='selectFrom' size='15' multiple='multiple'></select>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	
+	<div id='deleteContentDialog' class='dialog'></div>
+	<div id='hideContentDialog' class='dialog'></div>
+	
+	<div id='authorStepDialog' class="dialog">
+		<div id='authorStepHeader' class='authorStepDialog'>
+			<table style='float:left;'>
+				<tr>
+					<td id='iconTD'><div id='iconDiv'></div></td>
+					<td>
+						Editor View:
+						<input type='radio' id='easyTrue' name='radioMode' onclick='eventManager.fire("authorStepModeChanged","true")'>Simple</input>
+						<input type='radio' id='easyFalse' name='radioMode' onclick='eventManager.fire("authorStepModeChanged","false")'/>Advanced</input>
+					</td>
+					<td id='refreshOptions'>
+						<input type='checkbox' id='refreshCheck' onclick='eventManager.fire("updateRefreshOption")' CHECKED>Refresh As Typing</input>
+						<input type='button' id='refreshButt' onclick='eventManager.fire("refreshNow")' value='Refresh Now'></input>
+						<input type='button' id='hintsButt' onclick='eventManager.fire("editHints",[0])' value='Edit Hints'></input>
+					</td>
+				</tr>
+			</table>
+			<div id="authorNavButtons" style='float:right'>
+				<input type='button' value='Save' onclick='eventManager.fire("saveStep")'/>
+				<input type='button' value='Save & Close' onclick='eventManager.fire("saveAndCloseStep")'/>
+				<input type='button' value='Close' onclick='eventManager.fire("closeStep")'/>
+			</div>
+		</div>
+		<div id='authorStepPanel' class='authorStepDialog'>
+			<table width='100%' height='100%'>
+				<tr>
+					<td id="dynamicParent" width='50%' style='height:100%;'><div id="dynamicPage"></div></td>
+					<td width='50%'><iframe id='previewFrame' width='99%' style='display: block; height: 100%;' name='previewFrame' onload='(typeof eventManager != "undefined" ? eventManager.fire("previewFrameLoaded") : false)'></iframe></td>
+				</tr>
+			</table>
+		</div>
+		<div id='authorStepFooter' class='authorStepDialog'>
+		</div>
+	</div>
+	
+	<div id='nodeSelectorDialog' class="dialog">
+	<div class='hd'></div>
+	<div class='bd'>
+		<div id='nodeSelectorInstructionsDiv'>
+			Select a step from the list of steps below that you want to link to, then select a color for that link and then click 'Select Step'. The steps in the step list appear in the order that they do in the project. 
+		</div>
+		<div id='nodeSelectDiv'>
+		</div>
+	</div>
+	</div>
+	
+	<div id='studentResponseBoxSizeDiv' class="dialog">
+		Size of Student Response Box (# rows):
+		<input id='studentResponseBoxSizeInput' type='text' onkeyup='eventManager.fire("stepStudentResponseBoxSizeChanged")'></input>
+	</div>
+	
+	<div id='richTextEditorToggleDiv' class="dialog">
+		Use Rich Text Editor
+		<input id='richTextEditorToggleInput' type='checkbox' onchange='eventManager.fire("stepRichTextEditorToggleChanged")'></input>
+	</div>
+	
+	<div id='starterSentenceAuthoringDiv' class="dialog">
+		<input type='radio' name='starterRadio' onclick='eventManager.fire("stepStarterSentenceAuthoringOptionChanged")' value='0'/> Do not user starter sentence <br/>
+		<input type='radio' name='starterRadio' onclick='eventManager.fire("stepStarterSentenceAuthoringOptionChanged")' value='1'/> Starter sentence available upon request <br/>
+		<input type='radio' name='starterRadio' onclick='eventManager.fire("stepStarterSentenceAuthoringOptionChanged")' value='2'/> Starter sentence shows immediately <br/>
+		Starter sentence: <textarea id='starterSentenceAuthoringInput' cols='60' rows='4' wrap='soft' onchange='eventManager.fire("stepStarterSentenceAuthoringSentenceChanged")'></textarea>
+	</div>
+	
+	<div id='promptDiv' class='authoringComponent dialog'>
+		<textarea id='promptInput' name='promptInput' cols='85' wrap='hard' onkeyup="eventManager.fire('stepPromptChanged')"></textarea>
+	</div>
+	
+	<div id='linkContainer' class="dialog">
+	<div id='linkDiv'>
+		<div id='instructionDiv'>
+			To create a link to another step within this project, highlight the text you want the students to click on, then click the 'Create New Link' button.
+		</div><br/>
+		Existing Links:
+		<div id='existingLinksDiv'></div><br/>
+		<div id='buttonDiv'>
+			<input type='button' value='Create New Link' onclick='eventManager.fire("createLink")'></input>
+		</div>
+	</div>
+	</div>
+	
+	<div id='cRaterDiv' class="dialog">
+		Enable CRater <input id='enableCRaterCheckbox' name='enableCRaterCheckbox' type='checkbox' onclick='eventManager.fire("enableCRater")' />
+		<div id='cRaterSettingsDiv' style='display:none;'>
+			Type: <input id='cRaterItemTypeCRATER' name='cRaterItemTypeCheckbox' type='radio' value='cRaterItemTypeCRATER' checked='checked' onclick='eventManager.fire("cRaterItemTypeChanged", ["CRATER"])' />CRater
+			<input id='cRaterItemTypeHENRY' name='cRaterItemTypeCheckbox' type='radio' value='cRaterItemTypeHENRY' onclick='eventManager.fire("cRaterItemTypeChanged", ["HENRY"])' />HENRY
+			<br>
+			CRater Item Id: <input id='cRaterItemIdInput' name='cRaterItemIdInput' type='text' size=15 onkeyup='eventManager.fire("cRaterItemIdChanged")' /> <input id='cRaterVerifyButton' type='button' value='Verify' onclick="eventManager.fire('cRaterVerify')"/> <div id='cRaterItemIdStatus' style='display:inline'></div>
+			<br>
+			Display CRater Score to Student <input id='cRaterDisplayScoreToStudent' name='cRaterDisplayScoreToStudent' type='checkbox' onclick='eventManager.fire("cRaterDisplayScoreToStudentChanged")' />
+			<br>
+			Display CRater Feedback to Student <input id='cRaterDisplayFeedbackToStudent' name='cRaterDisplayFeedbackToStudent' type='checkbox' onclick='eventManager.fire("cRaterDisplayFeedbackToStudentChanged")' />
+			<br>
+			Must Submit and Revise Before Exit <input id='cRaterMustSubmitAndReviseBeforeExit' name='cRaterMustSubmitAndReviseBeforeExit' type='checkbox' onclick='eventManager.fire("cRaterMustSubmitAndReviseBeforeExitChanged")' />
+			<br>
+			CRater Max Check Answers <input id='cRaterMaxCheckAnswers' name='cRaterMaxCheckAnswers' type='text' size=5 onkeyup='eventManager.fire("cRaterMaxCheckAnswersChanged")' />
+			<br>
+			<div id='cRaterFeedback'></div>
+		</div>
+	</div>
+	
+	<div id='cleanProjectDialog' class="dialog">
+	<div class='hd'></div>
+	<div id='cleanProjectPanel' class='bd'>
+		<div id='cleanProjectTitleDiv'><h3>Project Cleaning Results</h3></div><br/>
+		<div id='cleanProjectResultsDiv'>
+			<div id='cleanProjectResultsText'>Analyzing...</div><br/>
+			<table id='cleanProjectTable'>
+				<thead id='cleanProjectTableHead'>
+				</thead>
+				<tbody id='cleanProjectTableBody'>
+				</tbody>
+			</table>
+		</div><br/>
+		<input type='button' value='save' id='cleanSave' onclick='eventManager.fire("cleanSave")'/>
+		<input type='button' value='cancel' id='cleanCancel' onclick='eventManager.fire("cleanCancel")'/>
+	</div>
+	</div>
+	
+	<div id='constraintAuthoringDialog' class="dialog">
+		<table id='constraintAuthoringHeaderTable'>
+			<tbody>
+				<tr>
+					<td><div class='constraintButton' onclick='eventManager.fire("constraintShowAll")'>Show All</div></td>
+					<td><div class='constraintButton' onclick='eventManager.fire("constraintHideAll")'>Hide All</div></td>
+				</tr>
+				<tr>
+					<td id='constraintAuthoringText'>Project Layout:</td><td></td><td></td><td></td>
+					<td id='helpIcon' class='skipme'><a href='view/authoring/constraints/constrainthelp.html' target='_blank'>&nbsp;&nbsp;&nbsp;&nbsp;</a></td>
+				</tr>
 			</tbody>
 		</table>
-	</div><br/>
-	<input type='button' value='save' id='cleanSave' onclick='eventManager.fire("cleanSave")'/>
-	<input type='button' value='cancel' id='cleanCancel' onclick='eventManager.fire("cleanCancel")'/>
-</div>
-</div>
-
-<div id='constraintAuthoringDialog' style='display:none;'>
-	<table id='constraintAuthoringHeaderTable'>
-		<tbody>
-			<tr>
-				<td><div class='constraintButton' onclick='eventManager.fire("constraintShowAll")'>Show All</div></td>
-				<td><div class='constraintButton' onclick='eventManager.fire("constraintHideAll")'>Hide All</div></td>
-			</tr>
-			<tr>
-				<td id='constraintAuthoringText'>Project Layout:</td><td></td><td></td><td></td>
-				<td id='helpIcon' class='skipme'><a href='view/authoring/constraints/constrainthelp.html' target='_blank'>&nbsp;&nbsp;&nbsp;&nbsp;</a></td>
-			</tr>
-		</tbody>
-	</table>
+		
+		<div id='constraintProjectLayout'></div>
+	</div>
 	
-	<div id='constraintProjectLayout'></div>
-</div>
-
-<div id='editProjectTagsDialog' style='display:none;'>
-	<div id='editProjectDialogLoadingDiv'></div>
-	<div class="existingTagsDiv">
-		<div id='existingTagsHeadDiv'>Existing Tags</div>
-		<ul id='existingTagsUL' style='display:none;'></ul>
-		<div id='loadingEditProjectTagsDiv' style='display:none;'>
-			<div>Retrieving Project Tags from the Portal...</div>
-			<div><img src='images/loading.gif'/></div>
+	<div id='editProjectTagsDialog' class="dialog">
+		<div id='editProjectDialogLoadingDiv'></div>
+		<div class="existingTagsDiv">
+			<div id='existingTagsHeadDiv'>Existing Tags</div>
+			<ul id='existingTagsUL' style='display:none;'></ul>
+			<div id='loadingEditProjectTagsDiv' style='display:none;'>
+				<div>Retrieving Project Tags from the Portal...</div>
+				<div><img src='images/loading.gif'/></div>
+			</div>
+		</div>
+		<div class="createTagsDiv">
+			<div>Create A New Tag</div>
+			<div><input id="createTagInput" type="text"/><input type="button" value="create" onclick="eventManager.fire('projectTagCreateTag')"/></div>
 		</div>
 	</div>
-	<div class="createTagsDiv">
-		<div>Create A New Tag</div>
-		<div><input id="createTagInput" type="text"/><input type="button" value="create" onclick="eventManager.fire('projectTagCreateTag')"/></div>
+	
+	<div id='tagViewDialog' class="dialog">
+		<div id='projectTagView'></div>
 	</div>
-</div>
+	
+	<div id='importViewDialog' class="dialog">
+		<div id='importView'></div>
+	</div>
+	
+	<div id='iconsViewDialog' style="display: none;">
+		<div id='iconsView'></div>
+	</div>
+	
+	<div id='analyzeProjectDialog' class="dialog">
+	</div>
+	
+	<div id="reviewUpdateProjectDiv" class="dialog">
+	</div>
+	
+	<div id='stepTypeDescriptions' class="dialog"></div>
+	
+	<iframe id="hiddenifrm" name="hiddenifrm" scrolling="auto" frameborder="0" width="0%" height="0%"> [Your browser doesn't support iframes.] </iframe>
+	
+	<div id='overlay' class='overlay pageOverlay'></div>
+	
+	<div id='coverDiv' class='loading pageLoading'>
+		<div class='loadingText'>Loading WISE Authoring Tool</div>
+		<div><img src='images/loading.gif'/></div>
+	</div>
+	
+	<div id="sessionMessageDiv">
+	</div>
+	
+	<!-- Javascript -->
+	<script src="events/eventmanager.js"></script>
+	<script src="util/scriptloader.js"></script>
+	<script src="author/pac.js"></script>
+	
+	<script>
+	
+		/*
+		 * Starts the preview of the project once the vle is loaded
+		 */
+		function startWithParams(em){
+			eventManager.fire('startPreview',em);
+		};
+		
+		/*
+		 * Listener that is run when the bootstrap loading is complete.
+		 * Loads and starts the authoring view.
+		 */
+		function bootstrapListener(type,args,obj){
+			if(args[0]=='bootstrap'){
+				createEnvironment('env', eventManager);
+				env.startView('authoring');
+			}
+		};
+		
+		/**
+		 * Check if the text area is over the max length, if so, display an alert
+		 * and reduce the text value in the text area to the max length
+		 * @param textAreaName the name of the text area from the user's perspective
+		 * @param textAreaId the dom id of the text area
+		 * @param maxLength the max length for that text area
+		 *
+		 * TODO: move!
+		 */
+		function checkTextAreaLength(textAreaName, textAreaId, maxLength) {
+		    //get the text area
+			var textArea = document.getElementById(textAreaId);
+		
+		    //get the text in the text area
+			var textAreaValue = textArea.value;
+		
+		    //check if the length of the text is over the limit
+			if(textAreaValue.length > maxLength) {
+				//the length is over the limit
+				
+				//display an alert message
+				alert(textAreaName + " is limited to " + maxLength + " characters\n\nCharacters will be deleted from the end");
+		
+				/*
+				 * crop the text in the text area by removing characters at the end
+				 * of the text area
+				 */
+				textArea.value = textAreaValue.substring(0, maxLength);
+			}
+		}
+		
+		var view;
+		
+		/*
+		 * Loads scripts when body is loaded 
+		 */
+		//function loaded(){
+			//initializeLoading();
+			scriptloader.bootstrap(this, bootstrapListener);
+		//};
+	
+	</script>
 
-<div id='tagViewDialog' style="display: none;">
-	<div id='projectTagView'></div>
-</div>
-
-<div id='importViewDialog' style="display: none;">
-	<div id='importView'></div>
-</div>
-
-<div id='iconsViewDialog' style="display: none;">
-	<div id='iconsView'></div>
-</div>
-
-<div id='analyzeProjectDialog' style="display: none;">
-</div>
-
-<div id="reviewUpdateProjectDiv" style='display:none;'>
-</div>
-
-<div id='stepTypeDescriptions' style="display: none;"></div>
-
-<iframe id="hiddenifrm" name="hiddenifrm" scrolling="auto" frameborder="0" width="0%" height="0%"> [Content for
-browsers that don't support iframes goes here.] </iframe>
-
-</div>   <!--end of centered div-->
-
-<div id='overlay'></div>
-
-<div id='coverDiv'>
-	<!--<div id='coverPlace' style='height:40%;'></div>0-->
-	<div id='coverTextDiv'>WISE Authoring Tool is Loading</div>
-	<!--<div id='coverTextUpdateDiv'></div>
-	<br/>
-	<div id='coverImgDiv'>
-		<div id='fullDotsDiv' class='fullDots'></div>
-		<div id='pacDiv' class='pacOpen'></div>
-		<div id='flatDotsDiv' class='flatDots'></div>
-	</div>-->
-	<div><img src='images/loading.gif'/></div>
-</div>
-
-<div id="sessionMessageDiv">
-</div>
+  <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
+       mathiasbynens.be/notes/async-analytics-snippet -->
+  <script>
+    //var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
+    //(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    //g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+    //s.parentNode.insertBefore(g,s)}(document,'script'));
+  </script>
 </body>
 
 </html>

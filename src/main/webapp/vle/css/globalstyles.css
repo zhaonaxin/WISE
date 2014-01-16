@@ -1,12 +1,127 @@
 /** Styles for global vle tools and elements **/
+
+.center {
+	text-align:center;
+}
+
+.hidden {
+	display:none;
+}
+
+.block {
+	display:block;
+}
+
+.inline-block {
+	display:inline-block;
+}
+
+.inline {
+	display:inline;
+}
+
+.transparent {
+	opacity:0;
+	filter:alpha(opacity: 0);
+}
+
+.settings, .settingLabel {
+	font-family: "Source Sans Pro", sans-serif;
+    font-weight: 300;
+}
+
 p.info {
 	font-size: 0.9em;
 	margin: 0 0.5em 0.5em;
 	color: #745A33;
 }
 
+.icon {
+	height:16px;
+	width:16px;
+	vertical-align:text-top;
+}
+
+/* Links and input elements */
+
+a { 
+	/*color: #007391;*/
+	color:#1c8ca8;
+	margin: 0;
+    text-decoration:none;
+    cursor:pointer;
+    outline:none;
+}
+
+a:hover { text-decoration:underline; }
+
+a.submit {
+    background: #ff553f;
+    -webkit-box-shadow: 0 -10px 10px #F22B11 inset;
+    -moz-box-shadow: 0 -10px 10px #F22B11 inset;
+    -o-box-shadow: 0 -10px 10px #F22B11 inset;
+    box-shadow: 0 -10px 10px #F22B11 inset;
+    -o-border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+    -o-text-shadow: 0 0 1px #C21300;
+    -moz-text-shadow: 0 0 1px #C21300;
+    -webkit-text-shadow: 0 0 1px #C21300;
+    text-shadow: 0 0 1px #C21300;
+    text-align: center;
+    border:1px solid #FF361C;
+    border-bottom-color:#C21300;
+    padding: 4px 8px;
+    display: inline-block;
+    font-family: Arial;
+    font-size: 14px;
+    color: #ffffff !important;
+    font-weight: bold;
+    cursor:pointer;
+    margin:0;
+}
+
+a.submit.small {
+	font-size: 13px;
+    /*font-weight: normal;*/
+}
+
+a.submit:hover {
+	-webkit-box-shadow: 0 -10px 10px #DB1200 inset;
+    -moz-box-shadow: 0 -10px 10px #DB1200 inset;
+    -o-box-shadow: 0 -10px 10px #DB1200 inset;
+    box-shadow: 0 -10px 10px #DB1200 inset;
+    text-decoration:none;
+}
+a.submit:active {
+    -webkit-box-shadow: 0 10px 15px #F22B11 inset;
+    -moz-box-shadow: 0 10px 15px #F22B11 inset;
+    -o-box-shadow: 0 10px 15px #F22B11 inset;
+    box-shadow: 0 10px 15px #F22B11 inset;
+}
+a.submit.disabled {
+	color: #999999;
+	background: #F4F4F4;
+	border-color: #CCCCCC;
+	-moz-box-shadow:none;
+	-webkit-box-shadow:none;
+	box-shadow:none;
+	text-shadow:none;
+	cursor:default;
+}
+
+input, textarea, button {
+	outline:none;
+}
+
+img.help {
+	vertical-align:text-bottom;
+	height:16px;
+}
+
 input[type="text"], input[type="password"], textarea {
-	margin: .25em;
+	margin: 0 .25em;
 	padding: 0.25em;
     font-size: 0.9em;
     border:1px solid #cccccc;
@@ -15,61 +130,48 @@ input[type="text"], input[type="password"], textarea {
 }
 
 input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
-	border-color: #86bbb3;
+	border-color: #1C8CA8;
 }
 
-input[type="submit"],input[type="button"] {
-	border-radius: 4px;
-	-moz-border-radius: 4px;
-	-webkit-border-radius: 4px;
-	background-color: #F9F9F9;
-	cursor: pointer;
-	padding: .25em .5em;
-	border: 1px solid #aaaaaa;
-	background: #eeeeee url(../images/ui/ui-bg_highlight-hard_100_eeeeee_1x100.png) 50% 50% repeat-x;
-	font-weight: normal;
-	color: #444444;
-	font-size: .85em;
-	font-weight:bold;
-	margin: .1em;
-	text-decoration: none !important;
-	cursor: pointer;
+input[type="submit"], input[type="button"] {
+	background-color: #F2F5DB;
+    border: 1px solid #C5CD61;
+    -o-border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+    /*-moz-box-shadow: 0 0 1px #CCCCCC;
+    -webkit-box-shadow: 0 0 1px #CCCCCC;
+    box-shadow: 0 0 1px #CCCCCC;
+    color: #585F0C;*/
+    color:#727708;
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 0.25em 0.5em;
 	text-align: center;
 	zoom: 1;
 	overflow: visible;
-	line-height:1.2em;
 }
 
-input[type="submit"]:hover,input[type="button"]:hover {
-	-moz-box-shadow:0 0 1px #aaaaaa;
-	-webkit-box-shadow:0 0 1px #aaaaaa;
-	box-shadow:0 0 1px #aaaaaa;
-	border: 1px solid #888888;
-	background: #eeeeee url(../images/ui/ui-bg_highlight-hard_100_eeeeee_1x100.png) 50% 50% repeat-x;
-	color: #222222;
+input[type="submit"]:hover, input[type="button"]:hover {
+    border-color: #91C6B7;
+    /*-moz-box-shadow: 0 0 2px #AAAAAA;
+    -webkit-box-shadow: 0 0 2px #AAAAAA;
+    box-shadow: 0 0 2px #AAAAAA;*/
+    color: #007391;
 }
 
-input[type="submit"]:active,input[type="button"]:active {
+/*input[type="submit"]:active,input[type="button"]:active {
 	border: 1px solid #666666;
 	background: #555555 url(../images/ui/ui-bg_flat_50_555555_40x100.png) 50% 50% repeat-x;
 	color: #ffffff;
-}
+}*/
 
-input[type="submit"][disabled="disabled"],input[type="button"][disabled="disabled"] {
-	color: #999999;
-	background: #F4F4F4;
-	border-color: #CCCCCC;
-	-moz-box-shadow:none;
-	-webkit-box-shadow:none;
-	box-shadow:none;
-	cursor:default;
-}
-
-table.wisetable {
-	border-collapse: collapse;
-	margin: .5em auto;
-	border: 0 none;
-	text-align: center;
+input[type="submit"][disabled],input[type="button"][disabled],
+input.disabled[type="submit"], input.disabled[type="button"] {
+	background-color: #F4F4F4;
+    border-color: #CCCCCC;
+    color: #999999;
 }
 
 table.wisetable th {
@@ -81,16 +183,24 @@ table.wisetable th {
 	vertical-align:middle;
 }
 
-table.wisetable td {
-	border: 1px solid #DDD;
-	text-align: center;
-	vertical-align: middle;
-	padding: .5em;
-	font-size: 0.9em;
+::-webkit-input-placeholder {
+    color: #999 !important;
+}
+:-moz-placeholder {
+    color: #999 !important;
+}
+:-ms-input-placeholder {
+    color: #999 !important;
 }
 
-table.wisetable td.emph {
-	color: #745A33;
+:focus::-webkit-input-placeholder {
+	color:transparent !important;
+}
+:focus:-moz-placeholder {
+	color:transparent !important;
+}
+:focus:-ms-input-placeholder {
+    color:transparent !important;
 }
 
 .pValue {
@@ -113,30 +223,77 @@ table.wisetable td.emph {
 	-webkit-border-radius: 0 0 0 0;
 }
 
+
 /* System Messages */
 
-#vle_messages {
-	
+.message {
+	color:#745a33;
+	border:1px solid #745a33;
+	background-color:#f4efe8;
+	padding:.25em .5em;
+	-moz-box-shadow:0 0 2px #aaa;
+	-webkit-box-shadow:0 0 2px #aaa;
+	-o-box-shadow:0 0 2px #aaa;
+	box-shadow:0 0 2px #aaa;
+	display:inline-block;
+	font-weight:bold;
+	/*-o-border-radius:2px;
+	-moz-border-radius:2px;
+	-webkit-border-radius:2px;
+	border-radius:2px;*/
 }
+
+.message.error, .message.alert {
+	color:#FF563F;
+	border-color:#FF563F;
+	background-color:#fff3f2;
+}
+
+.error, .alert {
+	color:#FF563F;
+}
+
+input[type="text"].error, textarea.error {
+	border-color:#FF563F;
+}
+
+.message.success {
+	color:#1c8ca8;
+	border-color:#1c8ca8;
+	background-color:#eaf4f7;
+}
+
+.success {
+	color:#1c8ca8;
+}
+
+#vle_messages {}
 							
 #vle_messages .message  {
 	padding:.25em .5em;
+	border:0 none;
 	border-bottom:1px solid #777777;
 	text-align: center;
 	/*color:#EEEEEE;*/
-	color:#CCCCCC;
+	color:#DDDDDD;
 	font-size:.8em;
-	font-weight:bold;
+	/*font-weight:bold;*/
 	position:relative;
 	background: none repeat scroll 0 0 #333333;
+	-moz-box-shadow:none;
+	-webkit-box-shadow:none;
+	-o-box-shadow:none;
+	box-shadow:none;
+	display:block;
 	/*background:url("../images/message_bg.png") repeat scroll center center #2e2e2e;*/
 }
 
-#vle_messages .message span.content {
-	padding:0 20px;
+#vle_messages .message .content {
+	margin:0 20px;
+	display:inline-block;
 }
 
-#vle_messages .message span.content a {
+#vle_messages .message .content a {
 	font-weight:bold;
 	color:#FFFFFF;
 }
@@ -169,6 +326,10 @@ img.tooltip {
 /** Dialog and Content Styles **/
 .no-title .ui-dialog-titlebar {
 	display: none;
+}
+
+.dialog > form {
+	position:relative; /* for use with jQuery validation plugin auto scrolling to invalid elements */
 }
 
 .dialogContent {
@@ -232,13 +393,23 @@ img.tooltip {
 }
 
 .panelHeader {
-	border-bottom: 1px solid #D8C6B3;
+	/*border-bottom: 1px solid #D8C6B3;*/
+	border-bottom: 1px solid #cccccc;
 	color: #745A33;
-	font-family: Trebuchet MS;
+	font-family: "Trebuchet MS", Helvetica, sans-serif;
 	font-size: 1.3em;
 	font-weight: bold;
 	/*margin: 0 0.75em;*/
 	padding: 0.5em .25em 0.25em;
+	text-align:left;
+}
+
+.pageTitle {
+    color: #F97F6E;
+    float: right;
+    font-family: Arial,Helvetica,Tahoma,sans-serif;
+    font-size: 0.9em;
+    line-height: 1.4em;
 }
 
 .infoContent .panelHeader {
@@ -262,7 +433,7 @@ img.tooltip {
 
 /* Add an Idea Dialog Form */
 #addAnIdeaForm {
-	font-size:.9em;
+	/*font-size:.9em;*/
 }
 
 #addAnIdeaForm > div  {
@@ -275,6 +446,12 @@ img.tooltip {
 
 #addAnIdeaForm div.attribute div {
 	line-height:24px;
+}
+
+#addAnIdeaForm div.attribute.icon {
+	height:auto;
+	vertical-align:inherit;
+	width:auto;
 }
 
 #addAnIdeaForm div.attribute.icon div img {
@@ -409,6 +586,7 @@ img.tooltip {
 
 
 /** HINTS DISPLAY **/
+
 .hintText p {
 	margin: 0 0 0.5em;
 }

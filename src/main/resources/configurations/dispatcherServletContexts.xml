@@ -191,6 +191,7 @@
 		<property name="wiseProperties" ref="wiseProperties" />
 		<property name="tagger" ref="taggerController" />
 		<property name="aclService" ref="aclServiceImpl" />
+		<property name="runService" ref="runService" />
 	</bean>
 
 

@@ -6,9 +6,17 @@
  */
 View.prototype.authorDispatcher = function(type,args,obj){
 	if(type=='openProject'){
-		obj.openProject();
+		if(args){
+			obj.openProject(args[0]);
+		} else {
+			obj.openProject();
+		}
 	} else if(type=='projectSelected'){
-		obj.projectOptionSelected();
+		if(args){
+			obj.projectOptionSelected(args[0]);
+		} else {
+			obj.projectOptionSelected();
+		}
 	} else if(type=='loadingProjectCompleted'){
 		obj.onProjectLoaded();
 	} else if(type=='hideNodes'){
@@ -18,9 +26,11 @@ View.prototype.authorDispatcher = function(type,args,obj){
 	} else if(type=='toggleProjectMode'){
 		obj.toggleProjectMode();
 	} else if(type=='projectTitleChanged'){
-		obj.projectTitleChanged();
+		obj.projectTitleChanged(args[0]);
 	} else if(type=='stepLevelChanged'){
 		obj.stepLevelChanged();
+	} else if(type=='activityTermChanged'){
+		obj.activityTermChanged();
 	} else if(type=='stepTermChanged'){
 		obj.stepTermChanged();
 	} else if(type=='stepTermPluralChanged'){
@@ -34,7 +44,7 @@ View.prototype.authorDispatcher = function(type,args,obj){
 	} else if(type=='nodeIconUpdated'){
 		obj.nodeIconUpdated(args[0]);
 	} else if(type=='nodeTitleChanged'){
-		obj.nodeTitleChanged(args[0]);
+		obj.nodeTitleChanged(args[0],args[1]);
 	} else if(type=='launchPrevWork'){
 		obj.launchPrevWork(args[0]);
 	} else if(type=='moveSelectedLeft'){
@@ -47,6 +57,8 @@ View.prototype.authorDispatcher = function(type,args,obj){
 		obj.createNewProject();
 	} else if(type=='copyProject'){
 		obj.copyProject();
+	} else if(type=='copyProjectSelected'){
+		obj.copyOptionSelected(args[0]);
 	} else if(type=='createNewSequence'){
 		obj.createNewSequence();
 	} else if(type=='createNewNode'){
@@ -65,6 +77,8 @@ View.prototype.authorDispatcher = function(type,args,obj){
 		obj.submitUpload();
 	} else if(type=='editProjectFile'){
 		obj.editProjectFile();
+	} else if(type=='editProjectStructure'){
+		obj.editProjectStructure();
 	} else if(type=='exportProject'){
 		obj.exportProject();
 	} else if(type=='publishProject'){
@@ -200,6 +214,8 @@ View.prototype.metaDispatcher = function(type,args,obj){
 		obj.postLevelChanged();
 	} else if(type=='setLastEdited'){
 		obj.setLastEdited();
+	} else if(type=='editIMSettings'){
+		obj.editIMSettings();
 	}
 };
 

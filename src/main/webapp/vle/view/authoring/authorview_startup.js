@@ -8,6 +8,10 @@
  * and starts authoring tool in appropriate state.
  */
 View.prototype.startPortalMode = function(url, command, relativeProjectUrl, projectId, projectTitle, editPremadeComments){
+	this.portalProjectPaths = [];
+	this.portalProjectIds = [];
+	this.portalProjectTitles = [];
+	this.portalFavorites = 0;
 	this.portalUrl = url;
 	/*
 	 * this editingPollInterval is used to check who is also currently editing the
@@ -38,12 +42,15 @@ View.prototype.startPortalMode = function(url, command, relativeProjectUrl, proj
 	/* retrieve i18n files, defined in view_i18n.js */
 	this.retrieveLocales("main");
 
-
 	if(this.config != null) {
 		//set some variables from values in the config
 		this.portalUsername = this.config.getConfigParam("username");
+		this.portalUserFullname = this.config.getConfigParam("userfullname");
 		this.wiseBaseUrl = this.config.getConfigParam("wiseBaseUrl");
 		this.curriculumBaseUrl = this.config.getConfigParam("curriculumBaseUrl");
+		
+		//set user's name in page
+		$('#userName').text(this.portalUserFullname);
 	}
 	
 	if(command && command!=''){
@@ -54,6 +61,11 @@ View.prototype.startPortalMode = function(url, command, relativeProjectUrl, proj
 		if(command=='createProject'){
 			this.createMode = true;
 		} else if(command=='editProject' || command=='cleanProject'){
+			$('#projectContent').show();
+			$('#projectOverlay').show();
+			$('#projectLoading').show();
+			$('#projectWelcome').hide();
+			
 			this.portalProjectId = parseInt(projectId);
 			this.authoringBaseUrl = this.portalUrl + '?forward=filemanager&projectId=' + this.portalProjectId + '&command=retrieveFile&fileName=';
 			
@@ -67,7 +79,11 @@ View.prototype.startPortalMode = function(url, command, relativeProjectUrl, proj
 			var projectFolderUrl = this.authoringBaseUrl;
 			
 			this.loadProject(projectFileUrl, projectFolderUrl, true);
+			this.onAuthoringToolReady();
 		}
+	} else {
+		this.loadWelcomeScreen();
+		this.onAuthoringToolReady();
 	}
 	
 	if(editPremadeComments == "true") {
@@ -85,8 +101,6 @@ View.prototype.startPortalMode = function(url, command, relativeProjectUrl, proj
 	
 	//load the template files for all the step types
 	this.loadNodeTemplateFiles();
-	
-	this.onAuthoringToolReady();
 	
 	/* launch create project dialog if create mode has been set */
 	if(this.createMode){
@@ -258,20 +272,179 @@ View.prototype.getCurriculumBaseUrlSuccess = function(t,x,o){
 };
 
 /**
+ * Retrieves user's authorable projects and populates the authoring welcome screen
+ */
+View.prototype.loadWelcomeScreen = function(){
+	this.retrieveWelcomeProjectList();
+	
+	
+};
+
+/**
  * Removes the splash screen and shows the authoring tool when all
- * necessary parts have loaded.  Inserts i18n translations.
+ * necessary parts have loaded. Inserts i18n translations and binds
+ * general events.
  */
 View.prototype.onAuthoringToolReady = function(){
 	var view = this;
 	notificationManager.setMode('authoring');
-	$('#centeredDiv').show();
-	$('#coverDiv').hide();
-	$('#overlay').hide();
+	
+	// set validator item required message
+	$.extend(jQuery.validator.messages, {
+	  required: ' ' + view.getI18NString('validator_itemRequired')
+	});
+	
+	// bind general (non-changing) click events
+	this.bindGeneralEvents();
 	
 	// insert i18n text and tooltips/help items into DOM
-	this.insertTranslations("main", function(){ view.insertTooltips(); });
+	this.insertTranslations("main", function(){ 
+		view.insertTooltips();
+		
+		// hide loading objects and show authoring body
+		$('#author-body').show();
+		$('#coverDiv').hide();
+		$('#overlay').hide();
+	});
 	//clearInterval(window.loadingInterval);
 };
+
+/**
+ * Binds events that remain constant (don't change depending on context or 
+ * active project).
+ */
+View.prototype.bindGeneralEvents = function(){
+	var view = this;
+	
+	/* top toolbar events */
+	$("#openProjectLink").on("click", function(){
+		eventManager.fire("openProject");
+	});
+	$("#newProjectLink").on("click", function(){
+		eventManager.fire("createNewProject");
+	});
+	
+	/* welcome panel elements */
+	$('#projectWelcome').on('click','#families li',function(){
+		var panel = $(this).attr('id'), tab = 0, doOpen = true;
+		switch (panel){
+			case 'myFavorites':
+				tab = 0;
+				break;
+			case 'myOwned':
+				tab = 1;
+				break;
+			case 'myShared':
+				tab = 2;
+				break;
+			case 'myCreate':
+				doOpen = false;
+				break;
+		}
+		if(doOpen){
+			eventManager.fire('openProject',tab);
+		} else {
+			eventManager.fire('createNewProject');
+		}
+	});
+	
+	/* project editing panel elements */
+	
+	// toggle favorite link
+	$('#projectInfo').on('click','a.bookmark',function(){
+		var toggle = $(this);
+		toggle.tipTip('hide');
+		var id = toggle.attr('data-projectid');
+		var isBookmark = toggle.hasClass('true');
+		view.toggleBookmark(id, isBookmark, function(id,isBookmark){
+			if(isBookmark){
+				//remove star
+				toggle.removeClass('true');
+				
+				//update favorites count
+				view.portalFavorites-=1;
+			} else {
+				//add star
+				toggle.addClass('true');
+				
+				//update favorites count
+				view.portalFavorites+=1;
+			}
+		});
+	});
+	
+	// project thumb editing	
+	$('#editThumb').on('click',function(){
+		view.editProjectThumbnail();
+	});
+	
+	// project title editing
+	$('#projectTitle').on('click',function(){
+		view.editTitle();
+	});
+	$('#titleInput').keypress(function (e) {
+		if(e.keyCode == 13){
+			$(this).blur();
+		}
+    });
+	
+	// step term input
+	$('#stepTerm').on('change',function(){
+		eventManager.fire("stepTermChanged");
+	}).on('keyup',function(e){
+		if (e.keyCode === 13) {
+			$(this).blur();
+		}
+	});
+	
+	// activity term input
+	$('#activityTerm').on('change',function(){
+		eventManager.fire("activityTermChanged");
+	}).on('keyup',function(e){
+		if (e.keyCode === 13) {
+			$(this).blur();
+		}
+	});
+	
+	// project tools
+	$('#editInfo, #moreDetails').on('click',function(){
+		eventManager.fire('editProjectMetadata');
+	});
+	$('#manageFiles').on('click',function(){
+		eventManager.fire('viewAssets');
+	});
+	$('#previewProject').on('click',function(){
+		eventManager.fire('previewProject');
+	});
+	$('#editOrder').on('click',function(){
+		eventManager.fire('editProjectStructure');
+	});
+	
+	// project metadata feature toggles
+	$('#projectInfo input[type="checkbox"].metaInfo').on('click',function(){
+		view.updateMetaTools($(this).attr('data-field'),$(this).prop('checked'));
+	});
+	$('#loggingToggle').on('click',function(){
+		eventManager.fire('postLevelChanged');
+	});
+	
+	// IM settings link
+	$('#imSettingsEdit').on('click',function(){
+		eventManager.fire('editIMSettings');
+	});
+	
+	// set logging level data-on and data-off attributes
+	$('#loggingToggle').attr('data-on',this.getI18NString('authoring_project_panel_logging_high')).attr('data-off',this.getI18NString('authoring_project_panel_logging_low'));
+	
+	/* project structure authoring elements */
+	
+	// scrolling for active and inactive links
+	$("#dynamicProject .scroll").on('click', function(event){		
+		event.preventDefault();
+		$('#projectStructure > .contentWrapper').animate({scrollTop:$(this.hash).position().top-6}, 500, 'easeOutQuint');
+	});
+};
+
 
 //used to notify scriptloader that this script has finished loading
 if(typeof eventManager != 'undefined'){

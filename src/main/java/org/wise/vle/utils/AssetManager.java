@@ -1,20 +1,30 @@
 package org.wise.vle.utils;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import java.util.TreeMap;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,6 +33,7 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -63,8 +74,6 @@ public class AssetManager extends AbstractController {
 	private WorkgroupService workgroupService;
 	
 	private ProjectService projectService;
-	
-	private static final String DEFAULT_DIRNAME = "assets";
 
 	private boolean standAlone = true;
 
@@ -307,6 +316,40 @@ public class AssetManager extends AbstractController {
 				String result = uploadAsset(fileList, fileNames, fileMap, path, dirName, pathToCheckSize, studentMaxTotalAssetsSize);
 				
 				response.getWriter().write(result);
+			} else if(command.equals("download")){
+				// the student is downloading assets
+				
+				User user = ControllerUtil.getSignedInUser();
+				
+				//get the run
+				String runId = request.getParameter("runId");
+				Run run = null;
+				try {
+					run = getRunService().retrieveById(new Long(runId));
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+				} catch (ObjectNotFoundException e) {
+					e.printStackTrace();
+				}
+				
+				//get the workgroup id
+				List<Workgroup> workgroupListByOfferingAndUser = getWorkgroupService().getWorkgroupListByOfferingAndUser(run, user);
+				Workgroup workgroup = workgroupListByOfferingAndUser.get(0);
+				Long workgroupId = workgroup.getId();
+				
+				//get the directory name for the workgroup for this run
+				String dirName = run.getId()+"/"+workgroupId+"/unreferenced"; // looks like /studentuploads/[runId]/[workgroupId]/unreferenced
+				
+				//get the student uploads base directory path
+				String path = wiseProperties.getProperty("studentuploads_base_dir");
+				
+				// get the projectId
+				String projectId = (String) run.getProject().getId();
+				//String projectId = request.getParameter(PROJECTID);
+				
+				// get the asset(s) to download from the request
+				String asset = request.getParameter(ASSET);
+				AssetManager.downloadAsset(path, dirName, projectId, asset, response);
 			}
 		}
 		
@@ -718,6 +761,152 @@ public class AssetManager extends AbstractController {
 				}
 			} else {
 				return "Given project path does not exist";
+			}
+		}
+		
+		/**
+		 * Given a <code>HttpServletRequest</code> with path and asset parameters
+		 * finds the given asset(s) associated with the project in the given path and
+		 * allows the user to download the file(s). If asset parameter contains multiple
+		 * file names, bundles the requested files into a zip archive.
+		 * 
+		 * @param <code>HttpServletRequest</code> request
+		 * @return 
+		 * @return <code>String</code> message
+		 * @throws IOException 
+		 * @throws <code>ServletException</code>
+		 */
+		public static Object downloadAsset(String path, String dirName, String projectId, String asset, HttpServletResponse response) throws IOException {
+			//String path = request.getParameter(PATH);
+			//String dirName = (String) request.getAttribute("dirName");
+			//String projectId = request.getParameter(PROJECTID);
+			
+			/*if (dirName == null) {
+				dirName = DEFAULT_DIRNAME;
+			}
+			if (path == null) {
+			 path = (String) request.getAttribute(PATH);
+			}
+			if(projectId == null){
+				projectId = "";
+			}
+
+			String studentUploadsBaseDir = (String) request.getAttribute("studentuploads_base_dir");
+			String projectFolderPath = (String) request.getAttribute("projectFolderPath");
+			
+			if (studentUploadsBaseDir != null) {
+				// the user is a student
+				path = studentUploadsBaseDir;
+			} else if(projectFolderPath != null) {
+				//the user is a teacher
+				path = projectFolderPath;
+			}
+			
+			String asset = request.getParameter(ASSET);*/
+			JSONArray assets = new JSONArray();
+			try {
+				assets = new JSONArray(asset);
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
+			
+			File projectDir = new File(path);
+			if(path==null || !(projectDir.exists()) || !(projectDir.isDirectory())){
+				//response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+				return null;
+			} else {
+				File assetDir = new File(projectDir, dirName);
+				if(!assetDir.exists() || !assetDir.isDirectory()){
+					//response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+					return null;
+				} else {
+					if(assets.length()==0){
+						//response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+						return null;
+					} else if (assets.length() == 1){
+						String name;
+						try {
+							name = assets.getString(0);
+						} catch (JSONException e) {
+							//response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+							return null;
+						}
+						File assetFile = new File(assetDir, name);
+						if(assetFile.exists() && assetFile.isFile()){
+							// TODO: removed security check for downloading, as user is assumed to be logged in and able to author project; may want to implement one at some point?
+							//if(this.standAlone || SecurityUtils.isAllowedAccess(request, assetFile)){
+								//String filename = assetFile.getName();
+								
+								Pattern regex = Pattern.compile("\\..+$");
+								Matcher regexMatcher = regex.matcher(name);
+								if (regexMatcher.find()) {
+								    name = regexMatcher.replaceAll(regexMatcher.group(0).toLowerCase());
+								}
+								
+								response.setContentType(new MimetypesFileTypeMap().getContentType(name));
+								response.setContentLength((int)assetFile.length());
+								response.setHeader("Content-Disposition", "attachment; filename=" + URLEncoder.encode(name, "UTF-8"));
+
+								InputStream is = new FileInputStream(assetFile);
+								IOUtils.copy(is, response.getOutputStream());
+								response.flushBuffer();
+
+								return null;
+							//} else {
+								//response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+								//return null;
+							//}
+						} else {
+							response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+							return null;
+						}
+					} else {
+						response.setContentType("Content-type: text/zip");
+						response.setHeader("Content-Disposition", "attachment; filename=project" + projectId + "_files.zip");
+						ServletOutputStream out = response.getOutputStream();
+						ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(out));
+						
+						for(int r=0;r<assets.length();r++){
+							String name;
+							try {
+								name = assets.getString(r);
+							} catch (JSONException e) {
+								response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+								return null;
+							}
+							File assetFile = new File(assetDir, name);
+							if(assetFile.exists() && assetFile.isFile()){
+								// TODO: removed security check for downloading, as user is assumed to be logged in and able to author project; may want to implement one at some point?
+								//if(this.standAlone || SecurityUtils.isAllowedAccess(request, assetFile)){
+									
+									zos.putNextEntry(new ZipEntry(assetFile.getName()));
+									InputStream is = new FileInputStream(assetFile);
+									BufferedInputStream fif = new BufferedInputStream(is);
+									// Write the contents of the file
+									int data = 0;
+									while ((data = fif.read()) != -1) {
+										zos.write(data);
+									}
+									fif.close();
+
+									zos.closeEntry();
+								//} else {
+									//zos.write(("ERROR: You do not have permission to download file: " + file.getName()).getBytes());
+									//zos.closeEntry();
+									//System.out.println("Permission to download file: " + assetFile.getAbsolutePath() + " denied.");
+									//continue;
+								//}
+							} else {
+								response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+								return null;
+							}
+						}
+						zos.close();
+						return null;
+					}
+				}
 			}
 		}
 

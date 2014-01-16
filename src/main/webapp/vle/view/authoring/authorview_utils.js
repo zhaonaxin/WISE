@@ -2,6 +2,7 @@
  * Util functions for the authoring view
  * 
  * @author patrick lawler
+ * @author jonathan lim-breitbart
  */
 /**
  * Returns the content base from the given full url to a file.
@@ -91,18 +92,28 @@ View.prototype.utils.unhideNodes = function(){
 };
 
 /**
- * On browser resize, sets the authoringContainer to fit the remaining height of the browser window
+ * Adjustments to be made when browser window is resized
  */
 View.prototype.utils.resize = function(){
-	var height = $(window).height()-($('#authorHeader').height()+$('#currentProjectContainer').height()+$('#projectTools').height()+46);
-	$('#authoringContainer').height(height);
+	// set max width of project title display
+	var titleMaxW = $('#infoSummary').width() - $('#infoSummary a.bookmark').outerWidth() - $('#projectId').outerWidth() - $('#sharedIcon').outerWidth() - $('#libraryIcon').outerWidth()- $('#topProjectTools').outerWidth() - 50;
+	$('#projectTitle').css('max-width',titleMaxW + 'px');
+	$('#projectTitle').width('auto').width($('#projectTitle').width() + 2);
+	
+	// set width of activity editing controls
+	if($('#seqControls').hasClass('sticky')){
+		view.positionActivityControls();
+	}
+	
+	// set projectStructure to fit the remaining height of the projectContent
+	var psHeight = $('#projectContent').height() - $('#projectInfo').outerHeight(true) - parseInt($('#projectContent > .panelContent').css('padding-top'),10) - parseInt($('#projectContent > .panelContent').css('padding-bottom'),10);
+	$('#projectStructure').height(psHeight);
 };
 
 /*
  * Returns the current view mode (student, grading, authoring, etc.)
  */
 View.prototype.getMode = function() {
-	debugger;
 	var mode = this.config.getConfigParam('mode');
 	return mode;
 };
@@ -130,7 +141,43 @@ if (!Array.prototype.indexOf)
     }  
     return -1;  
   };  
-}  
+}
+
+/**
+ * Retrieve path to project folder for current node
+ * e.g.
+ * "http://wise.berkeley.edu/curriculum/135/"
+ * @return full path to the project folder
+ */
+View.prototype.getProjectFolderPath = function() {
+	/*
+	 * get the content base url which should be the url to the curriculum folder
+	 * e.g.
+	 * http://wise.berkeley.edu/curriculum
+	 */
+	var curriculumBaseUrl = this.getConfig().getConfigParam('curriculumBaseUrl');
+
+	var fullProjectFolderPath = null;
+	
+	if(this.getProjectMetadata().projectFolder != null) {
+		/*
+		 * the project folder is in the project meta data
+		 * e.g.
+		 * /135
+		 * 
+		 * so the full project folder path will look like
+		 * http://wise.berkeley.edu/curriculum/135
+		 */
+		fullProjectFolderPath = curriculumBaseUrl + this.getProjectMetadata().projectFolder;
+	}
+	
+	//make sure the projectFolder ends with '/'
+	if(fullProjectFolderPath.charAt(fullProjectFolderPath.length - 1) != '/') {
+		fullProjectFolderPath += '/';
+	}
+	
+	return fullProjectFolderPath;
+};
 
 //used to notify scriptloader that this script has finished loading
 if(typeof eventManager != 'undefined'){

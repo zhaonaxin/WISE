@@ -2,6 +2,7 @@ package org.wise.portal.presentation.web.controllers.teacher.project;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -19,6 +20,8 @@ import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.mail.javamail.ConfigurableMimeFileTypeMap;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.AbstractController;
 import org.wise.portal.dao.ObjectNotFoundException;
@@ -50,6 +53,8 @@ public class AnalyzeProjectController extends AbstractController {
 	private Vector<String> allNodeIds = new Vector<String>();
 	private Vector<String> activeNodeIds = new Vector<String>();
 	private Vector<String> inactiveNodeIds = new Vector<String>();
+	
+	ConfigurableMimeFileTypeMap mimeMap = new ConfigurableMimeFileTypeMap();
 
 	/**
 	 * Clear the variables
@@ -110,6 +115,13 @@ public class AnalyzeProjectController extends AbstractController {
 	 * @return a JSONArray string containing the results
 	 */
 	private String analyze(HttpServletRequest request, HttpServletResponse response) {
+		try{
+			ClassLoader loader = Thread.currentThread().getContextClassLoader(); 
+			InputStream resource = loader.getResourceAsStream("mime.types"); 
+			mimeMap.setMappingLocation(new InputStreamResource(resource));
+		} catch (Exception e){
+		}
+
 		//the string we will return
 		String results = "";
 		
@@ -355,8 +367,8 @@ public class AnalyzeProjectController extends AbstractController {
 	 *    "assets": [
 	 *       {
 	 *          "activeStepsUsedIn": [
-	 *             "Step 1.26: 1: What do engineers do? (HtmlNode)",
-	 *             "Step 1.27: 2: How fast is fast? (HtmlNode)"
+	 *             "1.26: What do engineers do? (HtmlNode)",
+	 *             "1.27: How fast is fast? (HtmlNode)"
 	 *          ],
 	 *          "assetFileName": "02AcuraTLHSF.3.mov",
 	 *          "inactiveStepsUsedIn": []
@@ -364,7 +376,7 @@ public class AnalyzeProjectController extends AbstractController {
 	 *       {
 	 *          "activeStepsUsedIn": [],
 	 *          "assetFileName": "av-3.gif",
-	 *          "inactiveStepsUsedIn": ["Inactive Step: html1 1 (HtmlNode)"]
+	 *          "inactiveStepsUsedIn": ["html1 1 (HtmlNode)"]
  	 *      }
 	 *    ]
 	 * }
@@ -407,8 +419,24 @@ public class AnalyzeProjectController extends AbstractController {
 					//get the asset file name
 					String assetFileName = assetFile.getName();
 					
+					String filename = assetFileName;
+					Pattern regex = Pattern.compile("\\..+$");
+					Matcher regexMatcher = regex.matcher(assetFileName);
+					if (regexMatcher.find()) {
+					    filename = regexMatcher.replaceAll(regexMatcher.group(0).toLowerCase());
+					}
+					
+					String contentType = mimeMap.getContentType(filename);
+					
+					Long fileSize = assetFile.length();
+					
+					Long lastModified = assetFile.lastModified();
+					
 					//create the object to hold the results for this asset
 					JSONObject assetFileResult = new JSONObject();
+					assetFileResult.put("contentType", contentType);
+					assetFileResult.put("fileSize", fileSize);
+					assetFileResult.put("lastModified", lastModified);
 					
 					//add the asset file name
 					assetFileResult.put("assetFileName", assetFileName);
@@ -458,7 +486,7 @@ public class AnalyzeProjectController extends AbstractController {
 							//get the step title
 							String title = nodeIdToNodeTitlesWithPosition.get(inactiveNodeId);
 							
-							//add teh step title to the array
+							//add the step title to the array
 							inactiveStepsUsedIn.put(title);
 						}
 					}
@@ -630,7 +658,7 @@ public class AnalyzeProjectController extends AbstractController {
 					String nodeType = node.getString("type");
 					
 					//get the step title e.g. Inactive Step: What is oxygen? (HtmlNode)
-					title = "Inactive Step: " + title + " (" + nodeType + ")";
+					title = /*"Inactive Step: " + */title + " (" + nodeType + ")";
 					
 					//add the mapping of node id to node title
 					nodeIdToNodeTitlesWithPosition.put(nodeId, title);
@@ -690,7 +718,7 @@ public class AnalyzeProjectController extends AbstractController {
 								JSONArray refs = node.getJSONArray("refs");
 								
 								//create the activity title with activity number e.g. Activity 1: What is light?
-								title = "Activity " + positionSoFar + ": " + title;
+								title = /*"Activity " + */positionSoFar + ": " + title;
 
 								//add the mapping of node id to node title
 								nodeIdToNodeTitlesWithPosition.put(nodeId, title);
@@ -734,7 +762,7 @@ public class AnalyzeProjectController extends AbstractController {
 							String nodeType = node.getString("type");
 							
 							//get the step title with step number e.g. Step 1.2: What is oxygen? (HtmlNode)
-							title = "Step " + positionSoFar + ": " + title + " (" + nodeType + ")";
+							title = /*"Step " + */positionSoFar + ": " + title + " (" + nodeType + ")";
 							
 							//add the mapping of node id to node title
 							nodeIdToNodeTitlesWithPosition.put(nodeId, title);

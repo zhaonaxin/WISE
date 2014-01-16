@@ -2,6 +2,7 @@
  * Functions specific to the creation, retrieving and updating of metadata
  * 
  * @author patrick lawler
+ * @author jonathan lim-breitbart
  */
 
 /**
@@ -36,6 +37,7 @@ View.prototype.projectMetaSuccess = function(text,xml,o){
 	//o.verifyCleaning(); //TODO: Jon re-enable when stable
 	o.populateMaxScores();
 	o.setPostLevel();
+	o.populateMetaSettings();
 	o.hasProjectMeta = true;
 };
 
@@ -53,7 +55,8 @@ View.prototype.projectMetaFailure = function(c,o){
 View.prototype.updateProjectMetaOnServer = function(publish, silent){
 	var callback = function(text, xml, o){
 		o.hasProjectMeta = true;
-		$('#editProjectMetadataDialog').dialog('close');
+		o.populateMetaSettings();
+		//$('#editProjectMetadataDialog').dialog('close');
 		
 		if(!silent){
 			o.notificationManager.notify('Project settings saved.', 3);
@@ -65,10 +68,18 @@ View.prototype.updateProjectMetaOnServer = function(publish, silent){
 	};
 	
 	var failed = function(text, xml, o){
-		o.notificationManager.notify('Error saving project settings.', 3);
+		o.notificationManager.notify('Error saving project settings. Please check your network connection and try again.', 3);
+		
+		// revert project metadata to state before POST attempt
+		this.projectMeta = this.previousProjectMeta;
+		o.setPostLevel();
+		o.populateMetaSettings();
 	};
 	
 	if(this.mode == "portal") {
+		// store previous project metadata (in case POST fails)
+		this.previousProjectMeta = this.projectMeta;
+		
 		/*
 		 * set the max scores into the metadata. we need to do this for max
 		 * scores because we do not keep the this.projectMeta.maxScores up to date
@@ -102,6 +113,7 @@ View.prototype.updateProjectMetaOnServer = function(publish, silent){
 
 /**
  * If the authoring tool is in portal mode, attempts to publish the current metadata to the portal.
+ * TODO: remove (deprecated)
  */
 View.prototype.updateProjectMetadataOnPortal = function(){
 	var success = function(t,x,o){
@@ -199,23 +211,272 @@ View.prototype.populateMaxScores = function(){
  */
 View.prototype.setPostLevel = function(){
 	if(this.projectMeta.postLevel){
-		var opts = document.getElementById('postLevelSelect').options;
-		for(var x=0;x<opts.length;x++){
-			if(this.projectMeta.postLevel==opts[x].value){
-				this.getProject().setPostLevel(opts[x].value);
-				document.getElementById('postLevelSelect').selectedIndex = x;
-			};
-		};
+		if(this.projectMeta.postLevel == 1){
+			$('#loggingToggle').attr('checked',false);
+		} else if(this.projectMeta.postLevel == 5){
+			$('#loggingToggle').attr('checked',true);
+		}
 	};
+};
+
+/**
+ * Initialize and renders the edit project metadata dialog
+ */
+View.prototype.initializeEditProjectMetadataDialog = function(){
+	var view = this;
+	
+	var updateProjectMetadata = function(){
+		// check for validation
+		if($('#projectMetadata').validate({
+			ignore: "",
+			invalidHandler: function(form, validator) {
+		        if (!validator.numberOfInvalids())
+		            return;
+		        var target = $(validator.errorList[0].element);
+		        if(target.is('select')){
+		        	// target is a select element that is hidden and uses a jQuery selectMenu button, so set target to replacement button
+	        		target = $('#' + target.attr('id') + '-button');
+	        	}
+		        $('#editProjectMetadataDialog').animate({
+		            scrollTop: target.position().top-2
+		        }, 250);
+
+		    }
+		}).form()){
+			view.projectMeta.title = $('#projectMetadataTitle').val();
+			view.projectMeta.theme = $('#projectMetadataTheme').val();
+			view.projectMeta.navMode = $('#projectMetadataNavigation').val();
+			view.projectMeta.subject = $('#projectMetadataSubject').val();
+			view.projectMeta.summary = $('#projectMetadataSummary').val();
+			view.projectMeta.gradeRange = $('#projectMetadataGradeRange').val();
+			view.projectMeta.totalTime = $('#projectMetadataTotalTime').val();
+			view.projectMeta.compTime = $('#projectMetadataCompTime').val();
+			view.projectMeta.contact = $('#projectMetadataContact').val();
+			view.projectMeta.techReqs = {};
+			view.projectMeta.techReqs.java = $("#projectMetadataTechJava").prop('checked');
+			view.projectMeta.techReqs.flash = $("#projectMetadataTechFlash").prop('checked');
+			view.projectMeta.techReqs.quickTime = $("#projectMetadataTechQuicktime").prop('checked');
+			view.projectMeta.techReqs.techDetails = $('#projectMetadataTechDetails').val();
+			view.projectMeta.lessonPlan = $('#projectMetadataLessonPlan').val();
+			view.projectMeta.standards = $('#projectMetadataStandards').val();
+			view.projectMeta.keywords = $('#projectMetadataKeywords').val();
+			view.projectMeta.language = $('#projectMetadataLanguage').val();
+			
+			// update metadata on server
+			view.updateProjectMetaOnServer(true);
+			
+			// update metadata and title displays
+			view.populateMetaSettings();
+			$('#projectTitle').text(view.projectMeta.title);
+			// TODO: do we need to update the project file as well here with any new title?
+			
+			// close dialog
+			$('#editProjectMetadataDialog').dialog('close');
+		}
+	};
+
+	var undoProjectMetadata = function(){
+		view.editProjectMetadata();
+	};
+	
+	var cancel = function(){
+		// close dialog
+		$('#editProjectMetadataDialog').dialog('close');
+	};
+	
+	$('#editProjectMetadataDialog').dialog({autoOpen:false, modal:true, title:view.getI18NString('authoring_dialog_meta_title'), width:850,
+		dialogClass: 'settings',
+		open: function(){
+			// initialize jQuery UI selectmenus on select elements
+			$('#editProjectMetadataDialog select').selectmenu();
+			$('#editProjectMetadataDialog select').selectmenu('refresh');
+			
+			// adjust dialog height to window
+			view.utils.adjustDialogHeight(this);
+		},
+		close: function(){
+			// reset form validation
+			$('#projectMetadata').validate().resetForm();
+		},
+		beforeClose: function(){
+			// TODO: check for validation and force save - maybe should hide the cancel button on load if fields are missing
+			//if(!$('#projectMetadata').validate().form()){
+				//return false;
+			//}
+		},
+		buttons: [{text: this.getI18NString("cancel"), click: cancel, class: 'secondary'},
+		          {text: this.getI18NString("undo_changes"), click: undoProjectMetadata, class: 'secondary'},
+		          {text: this.getI18NString("save"), click: updateProjectMetadata}]});
+};
+
+/**
+ * Sets initial values and optionally shows the edit project metadata dialog
+ * 
+ * @param show Boolean specifying whether to show the dialog
+ */
+View.prototype.editProjectMetadata = function(show){
+	var doShow = true;
+	if (typeof show == 'boolean') doShow = show;
+	
+	if(this.getProject()){
+		$('#projectMetadataTitle').val(this.utils.resolveNullToEmptyString(this.projectMeta.title));
+		var author = $.parseJSON(this.projectMeta.author);
+		$('#projectMetadataAuthor').text(this.utils.resolveNullToEmptyString(author.fullname));
+		
+		// TODO: add project owner and shared info, a link to share with other teachers
+		
+		if(this.projectMeta.theme != null){
+			$('#projectMetadataTheme').val(this.projectMeta.theme);
+		}
+		var navMode = '';
+		if(this.projectMeta.navMode != null){
+			navMode = this.projectMeta.navMode;
+		}
+		var themeName = $('#projectMetadataTheme').val();
+		// display selected theme
+		$('#currentTheme').text($('#projectMetadataTheme option:selected').text());
+		// set nav mode
+		this.populateNavModes(themeName,navMode);
+		
+		// TODO: make 'other' options functional - let user type in alternate values
+		$('#projectMetadataSubject').val(this.utils.resolveNullToEmptyString(this.projectMeta.subject));
+		$('#projectMetadataGradeRange').val(this.utils.resolveNullToEmptyString(this.projectMeta.gradeRange));
+		$('#projectMetadataTotalTime').val(this.utils.resolveNullToEmptyString(this.projectMeta.totalTime));
+		$('#projectMetadataLanguage').val(this.utils.resolveNullToEmptyString(this.projectMeta.language));
+		$('#projectMetadataCompTime').val(this.utils.resolveNullToEmptyString(this.projectMeta.compTime));
+		$('#projectMetadataSummary').val(this.utils.resolveNullToEmptyString(this.projectMeta.summary));
+		$('#projectMetadataContact').val(this.utils.resolveNullToEmptyString(this.projectMeta.contact));
+		$('#projectMetadataLanguage').val(this.utils.resolveNullToEmptyString(this.projectMeta.language));
+		$('#projectMetadataLessonPlan').val(this.utils.resolveNullToEmptyString(this.projectMeta.lessonPlan));
+		$('#projectMetadataStandards').val(this.utils.resolveNullToEmptyString(this.projectMeta.standards));
+		$('#projectMetadataKeywords').val(this.utils.resolveNullToEmptyString(this.projectMeta.keywords));
+		
+		var techReqs = this.projectMeta.techReqs,
+			techReqSettings = $('#projectMetadataTechFlash, #projectMetadataTechJava, #projectMetadataTechQuickTime');
+		
+		if(techReqs != null) {
+
+			//determine if flash needs to be checked
+			var flashReq = techReqs.flash ? true : false;
+			$('#projectMetadataTechFlash').prop('checked', flashReq);
+			
+			//determine if java needs to be checked
+			var javaReq = techReqs.java ? true : false;
+			$('#projectMetadataTechJava').prop('checked', javaReq);
+			
+			//determine if quicktime needs to be checked
+			var quickTimeReq = techReqs.quickTime ? true : false;
+			$('#projectMetadataTechQuickTime').prop('checked', quickTimeReq);
+
+			//set the tech details string
+			$('#projectMetadataTechDetails').val(this.utils.resolveNullToEmptyString(techReqs.techDetails));
+		} else {
+			techReqSettings.prop('checked', false);
+		}
+		
+		if(doShow){
+			// set header text with project id
+			var metaHeaderText = this.getI18NStringWithParams('authoring_dialog_meta_header',[this.portalProjectId]);
+			// add parent project id, if applicable
+			if(typeof this.parentProjectId === 'number'){
+				metaHeaderText += '<span class="more">' + this.getI18NStringWithParams('authoring_dialog_meta_headerParent',[this.parentProjectId]) + '</span>';
+			}
+			$('#metaHeader').html(metaHeaderText);
+			
+			if ($('#editProjectMetadataDialog').is(':visible')){
+				// refresh jQuery UI selectmenus
+				$('#editProjectMetadataDialog select').selectmenu('refresh');
+			} else {
+				// open dialog
+				$('#editProjectMetadataDialog').dialog('open');
+			}
+		}
+	} else {
+		this.notificationManager.notify('Open a project before using this tool.', 3);
+	};
+};
+
+/**
+ * Populates the project metadata settings in the project editing panel
+ */
+View.prototype.populateMetaSettings = function(){
+	this.editProjectMetadata(false);
+	
+	if (this.projectMeta.tools != null) {
+		var tools = this.projectMeta.tools;
+		// determine if idea manager is enabled
+		if (tools.isIdeaManagerEnabled != null && tools.isIdeaManagerEnabled) {
+			$("#enableIM").prop('checked', true);
+		} else {
+			$("#enableIM").prop('checked',false);
+		}
+	
+		// determine if enable student asset uploader is enabled
+		if (tools.isStudentAssetUploaderEnabled != null && tools.isStudentAssetUploaderEnabled) {
+			$("#enableUpload").prop('checked', true);
+		} else {
+			$("#enableUpload").prop('checked', false);
+		}
+	}
+	
+	$('#projectInfo input[type="checkbox"]').toggleSwitch('refresh');
+	
+	// insert categories summary and link to edit project details
+	// TODO: change grade level category options (make more universal perhaps)
+	$('#summaryDetails').text($('#projectMetadataSubject option:selected').text() + ' / ' + $('#projectMetadataGradeRange option:selected').text() + ' / ' + $('#projectMetadataLanguage option:selected').text());
+	
+	if(this.projectMeta.theme != null){
+		$('#projectMetadataTheme').val(this.projectMeta.theme);
+	}
+	var navMode = '';
+	if(this.projectMeta.navMode != null){
+		navMode = this.projectMeta.navMode;
+	}
+	var themeName = $('#projectMetadataTheme').val();
+	this.populateNavModes(themeName,navMode);
+	
+	$('#currentTheme').text($('#projectMetadataTheme option:selected').text());
+};
+
+/**
+ * Updates project metadata settings based on project editing panel changes
+ * @param item String representing the project metadata field to update
+ * @param val String/boolean/object with the value to set
+ * 
+ */
+View.prototype.updateMetaSettings = function(item,val){
+	this.projectMeta[item] = val;
+	this.updateProjectMetaOnServer();
+};
+
+/**
+ * Updates project metadata tools object on project editing panel changes
+ * @param item String representing the tools metadata field to update
+ * @param val String/boolean/object with the value to set
+ * 
+ */
+View.prototype.updateMetaTools = function(item,val){
+	if(typeof this.projectMeta.tools == 'undefined'){
+		this.projectMeta.tools = {};
+	}
+	this.projectMeta.tools[item] = val;
+	this.updateProjectMetaOnServer();
+	
+	if(item=='isIdeaManagerEnabled' && val==true){
+		setTimeout(function(){ eventManager.fire('editIMSettings'); },500);
+	}
 };
 
 /**
  * Retrieves the user selected value for logging level and updates the metadata file.
  */
 View.prototype.postLevelChanged = function(){
-	var val = document.getElementById('postLevelSelect').options[document.getElementById('postLevelSelect').selectedIndex].value;
+	/*var val = document.getElementById('postLevelSelect').options[document.getElementById('postLevelSelect').selectedIndex].value;
 	this.projectMeta.postLevel = parseInt(val);
-	this.getProject().setPostLevel(parseInt(val));
+	this.getProject().setPostLevel(parseInt(val));*/
+	var val = ($('#loggingToggle').prop('checked') ? 5 : 1);
+	this.projectMeta.postLevel = val;
+	this.getProject().setPostLevel(val);
 	this.updateProjectMetaOnServer(false);
 };
 

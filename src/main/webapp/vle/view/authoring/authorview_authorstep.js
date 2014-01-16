@@ -341,7 +341,7 @@ View.prototype.addHint = function(){
  */
 View.prototype.deleteHint = function(){
 	// get index of currently-opened tab
-	var selectedIndex = $('#hintsTabs').tabs('option', 'selected');
+	var selectedIndex = $('#hintsTabs').tabs('option', 'active');
 	
 	//get the hints array
     var hintsArr = this.getAuthoringHintsArray();
@@ -466,6 +466,11 @@ View.prototype.editHints = function(tabIndex){
     var hintElement = $("<div id='hintsTabs'></div>").append(hintsPart1).append(hintsPart2);
     //set the html into the div
     $('#editHintsPanel').html('').append(settings).append(hintButtons).append(hintElement);
+    
+    if(!Modernizr.testAllProps('boxSizing')){
+		// prevent textarea from extending beyond parent div in old browsers
+		$('textarea.hintTextBox',$('#editHintsPanel')).css('width','auto');
+	}
     
     //make the div visible
     $('#editHintsPanel').dialog('open');
@@ -677,19 +682,21 @@ View.prototype.injectAssetPath = function(contentString) {
  * e.g.
  * "http://wise4.berkeley.edu/curriculum/135/"
  * @return full path to the project folder
+ * 
+ * TODO: remove (moved to and updated in authorview_utils.js)
  */
-View.prototype.getProjectFolderPath = function() {
-	var contentBaseUrl = "";
+/*View.prototype.getProjectFolderPath = function() {
+	var contentBaseUrl = "";*/
 	
 	/*
 	 * get the content base url which should be the url to the curriculum folder
 	 * e.g.
 	 * http://wise4.berkeley.edu/curriculum
 	 */
-	var contentBaseUrl = this.activeNode.getAuthoringModeContentBaseUrl();
+	//var contentBaseUrl = this.activeNode.getAuthoringModeContentBaseUrl();
 	
 	//if the contentBaseUrl ends with '/' we will remove it
-	if(contentBaseUrl.charAt(contentBaseUrl.length - 1) == '/') {
+	/*if(contentBaseUrl.charAt(contentBaseUrl.length - 1) == '/') {
 		contentBaseUrl = contentBaseUrl.substring(0, contentBaseUrl.length - 1);
 	}
 
@@ -704,7 +711,7 @@ View.prototype.getProjectFolderPath = function() {
 		 * so the full project folder path will look like
 		 * http://wise4.berkeley.edu/curriculum/135
 		 */
-		fullProjectFolderPath = contentBaseUrl + this.getProjectMetadata().projectFolder;
+		/*fullProjectFolderPath = contentBaseUrl + this.getProjectMetadata().projectFolder;
 	}
 	
 	//make sure the projectFolder ends with '/'
@@ -713,7 +720,7 @@ View.prototype.getProjectFolderPath = function() {
 	}
 	
 	return fullProjectFolderPath;
-};
+};*/
 
 View.prototype.insertCommonComponents = function() {
 	var commonComponents = this[this.resolveType(this.activeNode.type)].getCommonComponents();
@@ -877,9 +884,10 @@ View.prototype.enableRichTextAuthoring = function(id,update,fullpage) {
 	var contextPath = this.getConfig().getConfigParam('contextPath');
 	
 	if(fullpage == true){
-		// if full page editing is allowed, include fullpage plugin
+		// if full page editing is allowed, include fullpage plugin and other advanced extras
 		plugins = "fullpage,preview,media,style,layer,table,advhr,advimage,advlist,advimagescale,loremipsum,image_tools,emotions,jqueryinlinepopups,tableextras,searchreplace,contextmenu,paste,directionality,fullscreen,visualchars,xhtmlxtras,template,wordcount";
 	} else {
+		// TODO: remove some of these plugins to simplify interface
 		plugins = "preview,media,style,layer,table,advhr,advimage,advlist,advimagescale,loremipsum,image_tools,emotions,jqueryinlinepopups,tableextras,searchreplace,contextmenu,paste,directionality,fullscreen,visualchars,xhtmlxtras,template,wordcount";
 	}
 	
@@ -946,7 +954,7 @@ View.prototype.enableRichTextAuthoring = function(id,update,fullpage) {
 		urlconverter_callback : function(url, node, on_save){
 			if(on_save){
 				//get the context path without the slash e.g. wise
-				var contextPathWithoutSlash = contextPath.replace("/", "");
+				var contextPathWithoutSlash = contextPath.replace("/","");
 				
 				var regex = new RegExp("/[..\/]+" + contextPathWithoutSlash + "/");
 				
@@ -960,8 +968,11 @@ View.prototype.enableRichTextAuthoring = function(id,update,fullpage) {
 };
 
 function fileBrowser(field_name, url, type, win){
-	var callback = function(field_name, url, type, win){
+	var callback = function(url, params){
 		url = 'assets/' + url;
+		var field_name = params.field_name,
+			win = params.win,
+			type = params.type;
 		win.document.getElementById(field_name).value = url;
 		// if we are in an image browser
         if (typeof(win.ImageDialog) != "undefined") {

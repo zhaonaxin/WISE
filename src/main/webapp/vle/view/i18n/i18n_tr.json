@@ -1,25 +1,25 @@
 {
-	"file_button_text": {
+	"vle_toolbar_files": {
         "value": "Dosyalar",
         "description": "Text on the File Manager button for Student VLE"
     },
-    "ideas_button_text": {
+    "vle_toolbar_ideaBasket": {
         "value": "Düşünceler",
         "description": "Text on the Idea Manager button for Student VLE"
     },
-    "addidea_button_text": {
+    "vle_toolbar_newIdea": {
         "value": "Düşünce Ekle",
         "description": "Text on Add Idea buttons for Student VLE"
     },
-    "mywork_button_text": {
+    "vle_toolbar_myWork": {
         "value": "Çalışmam",
         "description": "Text on the My Work button for Student VLE"
     },
-    "display_chat_room": {
+    "vle_toolbar_chat": {
         "value": "Sohbet Ortamı Açma",
         "description": "Text on the Chat Room button for Student VLE"
     },
-    "mywork_button_title": {
+    "vle_toolbar_myWorkTitle": {
         "value": "Çalışmamı Gözden Geçir",
         "description": "Text for mouse hover title on the My Work button"
     },

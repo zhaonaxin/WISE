@@ -30,12 +30,12 @@ NavigationPanel.prototype.createSequenceHtml = function(classString, stepId, tit
 	// create the activity DOM element
 	// *REQUIRED*: the id for this element should be the stepId param
 	// *REQUIRED*: the classString param should be added to the class attribute
-	// *OPTIONAL*: If you want to include an element that shows the steps within this activity (and hides the steps in other activities), add an onclick event that runs this javascript code: eventManager.fire('toggleSequence','" + position + "');
+	// *OPTIONAL*: If you want to include an element that shows the steps within this activity (and optionally hides the steps in other activities), add an onclick event that runs this javascript code: eventManager.fire('toggleSequence','" + position + "');
 	// (see sequenceOpened and sequenceClosed prototype functions below for more details on toggling activity displays)
 	// *SUGGESTED*: if you want to display the activity's title and position, include the title and position params (add 1 to the position to show the correct sequence number)
 	var html = "<ul name='menuItem' class='"+ classString + "' id='" + stepId + "'>" +
-	"<li class='sequenceTitle'><a onclick='eventManager.fire(\"toggleSequence\", \"" + position + "\")'>" + (position+1) + ": " + title + "</a></li>" +
-	"</ul>";
+		"<li class='sequenceTitle'><a onclick='eventManager.fire(\"toggleSequence\", \"" + position + "\")'>" + title + "</a></li>" +
+		"</ul>";
 	return html;
 };
 
@@ -388,9 +388,6 @@ for(var x=0; x<events.length; x++) {
 
 
 
-
-
-
 NavigationPanel.prototype.navigationPanelPrevButtonClickedListener = function() {
 	view.renderPrevNode();
 };
@@ -663,29 +660,13 @@ NavigationPanel.prototype.getNavigationHtml = function(node, depth, position) {
 	if(!deep){
 		deep = 0;
 	};
-
+	
 	var title = '';
 
 	// handle any processing (e.g. for branching) before we create the navigation html.
 	node.onBeforeCreateNavigationHtml();
 
 	var nodeTitle = node.getTitle();
-	var currentStepNum = this.getStudentViewPosition(position);
-	if(this.autoStep) {
-		title += this.stepTerm + " " + currentStepNum + ": "; 
-	} else {
-		if(this.stepTerm && this.stepTerm != ''){
-			title += this.stepTerm + ': ';
-		};
-	};
-
-	var titlePosition = position;
-
-	if(!this.stepLevelNumbering){
-		titlePosition = '';
-	};
-
-	title += this.getTitlePositionFromLocation(titlePosition.toString()) + " " + nodeTitle;
 
 	if (node.isHiddenFromNavigation()) {
 		// hide the node if node.isHidden is true
@@ -704,24 +685,24 @@ NavigationPanel.prototype.getNavigationHtml = function(node, depth, position) {
 	 * etc.
 	 */
 	deep = deep + 1;
-
+	
 	classString += " depth_" + deep;
-
+	
 	if (node == null) {
 		// this is for nodes that don't appear in navigation
 		// like journal
 		return;
 	}
-
+	
 	var stepId = 'node_' + position;
-
+	
 	/* this might be rendered from duplicate node, so check the nodeVisit for this
 	 * node to see if it has a duplicateId, if so do not set this one as the current
 	 * node */
 	if (node.id == this.view.getState().getCurrentNodeVisit().getNodeId() && !this.view.getState().getCurrentNodeVisit().duplicateId) {
 		classString += " currentNode";
 	}
-
+	
 	/* if this node is a duplicate node, it might have rendered the current node, so check
 	 * its real node to see if it is the one being rendered but then set this duplicate node
 	 * as the current node in the html */
@@ -730,76 +711,98 @@ NavigationPanel.prototype.getNavigationHtml = function(node, depth, position) {
 			this.view.getState().getCurrentNodeVisit().duplicateId == node.id){
 		classString += " currentNode";
 	}
-
-	if (node.children.length > 0 || node.type == "sequence") {
-		//the node is a sequence
-		classString = 'sequence';
-
-		if(node.getView() == "hidden") {
-			/*
-			 * the sequence is a hidden sequence so the user will not see
-			 * the sequence title in the nav bar but they will see all its
-			 * children. the children will show up on the level that the
-			 * sequence is in and not one level deeper. if one of the children
-			 * is a sequence, that will show up like a regular sequence.
-			 */
-			for (var x = 0; x < node.children.length; x++) {
-				htmlSoFar += this.getNavigationHtml(node.children[x], deep, position + '.' + x);
-			};
-		} else if(node.getView() == "glue") {
-			position = position + '.0';
-			stepId = 'node_' + position;
-			/*
-			 * the sequence is a glue sequence so the user will only see
-			 * the sequence title in the nav bar. they will not see
-			 * any children in the nav bar but the next button will step
-			 * through them. if a child is a sequence, they will 
-			 * still only see the sequence
-			 * and when they click the next button to go to the next
-			 * step, they will step through the sequence and the 
-			 * sequence's children.
-			 */
-			classString = 'glue';
-			var sequenceIcon = '<img src=\'images/stepIcons/instantquiz16.png\'/>';
-
-			if(node.getNodeClass() && node.getNodeClass()!='null' && node.getNodeClass()!=''){
-				var nodeIconPath = this.view.nodeIconPaths[node.type];
-				//sequenceIcon = '<img src=\'' + this.view.iconUrl + node.getNodeClass() + '16.png\'/> ';
-				sequenceIcon = '<img src=\'' + nodeIconPath + node.getNodeClass() + '16.png\'/> ';
-			};
-
-			//display a step with the title of the sequence for this glue sequence
-			htmlSoFar += this.createStepHtml(classString, stepId, node.id, sequenceIcon, position, title, this.getStudentViewPosition(position + '.0'));
-		} else {
-			//the sequence is normal
-
-			// if depth is is greater than 1, activity is nested in a parent activity so add 'nested' class to classString
-			if(deep > 1){
-				classString += " nested";
-			}
-
-			if(node.isHidden) {
-				//set the step to be hidden in the navigation panel
-				classString += " hidden";
-			}
-
-			// create the DOM object for this sequence
-			//htmlSoFar += this.createSequenceHtml(classString, deep, node.id, node.getTitle(), position);
-			var sequence = $(this.createSequenceHtml(classString, stepId, node.getTitle(), position));
-
-			// add the steps to this sequence
-			for (var i = 0; i < node.children.length; i++) {
-				htmlSoFar += this.getNavigationHtml(node.children[i], deep, position + '.' + i);
-			};
-			sequence.append(htmlSoFar);
-
-			// convert to html string
-			htmlSoFar = $('<div>').append(sequence.clone()).html();
-		}
+    
+    if (node.children.length > 0 || node.type == "sequence") {
+    	//the node is a sequence
+    	classString = 'sequence';
+    	
+    	if(node.getView() == "hidden") {
+    		/*
+    		 * the sequence is a hidden sequence so the user will not see
+    		 * the sequence title in the nav bar but they will see all its
+    		 * children. the children will show up on the level that the
+    		 * sequence is in and not one level deeper. if one of the children
+    		 * is a sequence, that will show up like a regular sequence.
+    		 */
+    		for (var x = 0; x < node.children.length; x++) {
+        		htmlSoFar += this.getNavigationHtml(node.children[x], deep, position + '.' + x);
+        	};
+    	} else if(node.getView() == "glue") {
+    		position = position + '.0';
+    		stepId = 'node_' + position;
+    		/*
+    		 * the sequence is a glue sequence so the user will only see
+    		 * the sequence title in the nav bar. they will not see
+    		 * any children in the nav bar but the next button will step
+    		 * through them. if a child is a sequence, they will 
+    		 * still only see the sequence
+    		 * and when they click the next button to go to the next
+    		 * step, they will step through the sequence and the 
+    		 * sequence's children.
+    		 */
+    		classString = 'glue';
+    		var sequenceIcon = '<img src=\'images/stepIcons/instantquiz16.png\'/>';
+    		
+    		if(node.getNodeClass() && node.getNodeClass()!='null' && node.getNodeClass()!=''){
+    			var nodeIconPath = this.view.nodeIconPaths[node.type];
+    			//sequenceIcon = '<img src=\'' + this.view.iconUrl + node.getNodeClass() + '16.png\'/> ';
+    			sequenceIcon = '<img src=\'' + nodeIconPath + node.getNodeClass() + '16.png\'/> ';
+    		};
+    		
+    		//display a step with the title of the sequence for this glue sequence
+    		title += node.getTitle();
+    		htmlSoFar += this.createStepHtml(classString, stepId, node.id, sequenceIcon, position, title, this.getStudentViewPosition(position + '.0'));
+    	} else {
+    		//the sequence is normal
+    		
+    		// if depth is is greater than 1, activity is nested in a parent activity so add 'nested' class to classString
+    		if(deep > 1){
+    			classString += " nested";
+    		}
+    		
+    		if(node.isHidden) {
+    			//set the step to be hidden in the navigation panel
+    			classString += " hidden";
+    		}
+    		
+    		title += this.view.utils.isNonWSString(this.activityTerm) ? this.activityTerm + ' ' : '';
+    		title += this.getTitlePositionFromLocation(position.toString()) + ': ' + node.getTitle();
+    		
+    		// create the DOM object for this sequence
+       		//htmlSoFar += this.createSequenceHtml(classString, deep, node.id, node.getTitle(), position);
+    		var sequence = $(this.createSequenceHtml(classString, stepId, title, position));
+        	
+        	// add the steps to this sequence
+        	for (var i = 0; i < node.children.length; i++) {
+        		htmlSoFar += this.getNavigationHtml(node.children[i], deep, position + '.' + i);
+        	};
+        	sequence.append(htmlSoFar);
+        	
+        	// convert to html string
+        	htmlSoFar = $('<div>').append(sequence.clone()).html();
+    	}
 	} else {
 		//the node is a step
+		var currentStepNum = this.getStudentViewPosition(position);
+		
+		if(this.autoStep) {
+			title += this.stepTerm + " " + currentStepNum + ": "; 
+		} else {
+			if(this.stepTerm && this.view.utils.isNonWSString(this.stepTerm)){
+				title += this.stepTerm + ': ';
+			};
+		};
+		
+		var titlePosition = position;
+		
+		if(!this.stepLevelNumbering){
+			titlePosition = '';
+		};
+		
+		title += this.getTitlePositionFromLocation(titlePosition.toString()) + " " + nodeTitle;
+		
 		var icon = '';
-
+		
 		if(node.getNodeClass() && node.getNodeClass()!='null' && node.getNodeClass()!=''){
 			var nodeClass = node.getNodeClass();
 			var isValid = false;
@@ -829,7 +832,7 @@ NavigationPanel.prototype.getNavigationHtml = function(node, depth, position) {
 			//create the html for the step icon
 			icon = '<img id="stepIcon_' + node.id + '" src=\'' + iconPath + '\' width=\'16px\'/> ';
 		};
-
+		
 		//display the step
 		htmlSoFar += this.createStepHtml(classString, stepId, node.id, icon, position, title);
 	};
