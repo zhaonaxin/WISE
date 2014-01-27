@@ -354,7 +354,7 @@
     create table runStatus (
         id bigint not null auto_increment,
         runId bigint,
-        status varchar(255),
+        status mediumtext,
         timestamp datetime,
         primary key (id)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -366,7 +366,7 @@
         info varchar(255),
         lastRun datetime,
         loggingLevel integer,
-        maxworkgroupsize integer,
+        maxWorkgroupSize integer,
         name varchar(255),
         postLevel integer,
         run_code varchar(255) not null unique,
@@ -429,7 +429,7 @@
         id bigint not null auto_increment,
         periodId bigint,
         runId bigint,
-        status varchar(255),
+        status mediumtext,
         timestamp datetime,
         workgroupId bigint,
         primary key (id)
@@ -957,7 +957,7 @@ INSERT INTO user_details (id, account_not_expired, account_not_locked, credentia
 
 INSERT INTO users (id, OPTLOCK, user_details_fk) VALUES (1,0,1),(2,0,2);
 
-INSERT INTO teacher_user_details (city,country,curriculumsubjects,displayname,isEmailValid,firstname,lastlogintime,lastname,numberoflogins,schoollevel,schoolname,signupdate,state,id) VALUES ('Berkeley','USA',NULL,'adminuser','0','ad',NULL,'min',0,3,'Berkeley','2010-10-25 15:41:31','CA',1),('Berkeley','USA',NULL,'preview','0','pre',NULL,'view',0,3,'Berkeley','2010-10-25 15:41:31','CA',2);
+INSERT INTO teacher_user_details (city,country,curriculumsubjects,displayname,isEmailValid,firstname,lastlogintime,lastname,numberoflogins,schoollevel,schoolname,signupdate,state,id) VALUES ('Berkeley','USA',NULL,'adminuser',0,'ad',NULL,'min',0,3,'Berkeley','2010-10-25 15:41:31','CA',1),('Berkeley','USA',NULL,'preview',0,'pre',NULL,'view',0,3,'Berkeley','2010-10-25 15:41:31','CA',2);
 
 INSERT INTO user_details_related_to_roles VALUES (1,1),(1,2),(1,3),(1,5),(2,1),(2,3),(2,5);
 

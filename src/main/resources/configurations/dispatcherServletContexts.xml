@@ -949,6 +949,7 @@
 	<bean id="studentDataController" class="org.wise.vle.web.StudentDataController">
 	    <property name="vleService" ref="vleService" />
 	    <property name="runService" ref="runService" />
+	    <property name="workgroupService" ref="wiseWorkgroupService" />
 	    <property name="wiseProperties" ref="wiseProperties" />
 	</bean>
 
@@ -1165,6 +1166,13 @@
         <property name="sessionFactory" ref="sessionFactory" />
     </bean>
     
+	<bean id="securityUtils"
+        class="org.wise.vle.utils.SecurityUtils">
+        <property name="wiseProperties" ref="wiseProperties" />
+        <property name="runService" ref="runService" />
+        <property name="workgroupService" ref="wiseWorkgroupService" />
+    </bean>
+    
     <bean
     	class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
     	<property name="order" value="2"></property>
@@ -1306,4 +1314,6 @@
     
                 <mvc:resources mapping="/vle/**" location="/vle/" order="1" />
     
+                <mvc:resources mapping="/curriculum/**" location="/curriculum/" order="1" />
+                
 </beans>
