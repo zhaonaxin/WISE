@@ -1397,7 +1397,7 @@ View.prototype.makeIdeaPublic = function(basket, ideaId) {
 		action:"addPublicIdea",
 		ideaId:ideaId,
 		ideaString:ideaString,
-		workgroupId:workgroupId
+		ideaWorkgroupId:workgroupId
 	};
 	
 	//make the request to add this idea as a public idea
@@ -1413,8 +1413,8 @@ View.prototype.makeIdeaPublic = function(basket, ideaId) {
 View.prototype.makeIdeaPublicCallback = function(responseText, responseXML, args) {
 	if(responseText != null && responseText != '') {
 		//get our basket
-		var basket = args.basket
-			view = this;
+		var basket = args.basket;
+		var view = args.thisView;
 		
 		//get the public idea basket as a JSON object
 		var publicIdeaBasketJSONObj = $.parseJSON(responseText);
@@ -1454,7 +1454,7 @@ View.prototype.makeIdeaPublicCallback = function(responseText, responseXML, args
 };
 
 /**
- * Make an idea private. This is makes a public idea no longer public.
+ * Make an idea private. This makes a public idea no longer public.
  * @param basket our basket
  * @param ideaId the idea id to make private
  */
@@ -1466,7 +1466,7 @@ View.prototype.makeIdeaPrivate = function(basket, ideaId) {
 	var ideaBasketParams = {
 		action:"deletePublicIdea",
 		ideaId:ideaId,
-		workgroupId:workgroupId
+		ideaWorkgroupId:workgroupId
 	};
 	
 	//make the request to make this idea private
@@ -1482,8 +1482,8 @@ View.prototype.makeIdeaPrivate = function(basket, ideaId) {
 View.prototype.makeIdeaPrivateCallback = function(responseText, responseXML, args) {
 	if(responseText != null && responseText != '') {
 		//get our basket
-		var basket = args.basket,
-			view = this;
+		var basket = args.basket;
+		var view = args.thisView;
 		
 		//get the public idea basket as a JSON object
 		var publicIdeaBasketJSONObj = $.parseJSON(responseText);
@@ -1536,8 +1536,8 @@ View.prototype.makeIdeaPrivateCallback = function(responseText, responseXML, arg
  */
 View.prototype.copyPublicIdea = function(basket, ideaWorkgroupId, ideaId) {
 	//get the current workgroup id
-	var workgroupId = this.getUserAndClassInfo().getWorkgroupId(),
-		view = this;
+	var workgroupId = this.getUserAndClassInfo().getWorkgroupId();
+	var view = this;
 	
 	//check if the idea exists in the private basket
 	var isPublicIdeaInPrivateBasket = basket.isPublicIdeaInPrivateBasket(ideaWorkgroupId, ideaId);
@@ -1556,7 +1556,7 @@ View.prototype.copyPublicIdea = function(basket, ideaWorkgroupId, ideaId) {
 		var ideaBasketParams = {
 			action:"copyPublicIdea",
 			ideaId:ideaId,
-			workgroupId:ideaWorkgroupId
+			ideaWorkgroupId:ideaWorkgroupId
 		};
 			
 		//make the request to copy the public idea
@@ -1683,7 +1683,7 @@ View.prototype.addWorkgroupToWorkgroupIdsThatHaveCopied = function(basket, ideaW
 	var ideaBasketParams = {
 		action:"copyPublicIdea",
 		ideaId:ideaId,
-		workgroupId:ideaWorkgroupId
+		ideaWorkgroupId:ideaWorkgroupId
 	};
 		
 	//make the request to copy the public idea
@@ -1700,8 +1700,8 @@ View.prototype.addWorkgroupToWorkgroupIdsThatHaveCopied = function(basket, ideaW
 View.prototype.addWorkgroupToWorkgroupIdsThatHaveCopiedCallback = function(responseText, responseXML, args) {
 	if(responseText != null && responseText != '') {
 		//get our basket
-		var basket = args.basket,
-			view = this;
+		var basket = args.basket;
+		var view = args.thisView;
 		
 		//get the public idea basket as a JSON object
 		var publicIdeaBasketJSONObj = $.parseJSON(responseText);
@@ -1778,7 +1778,7 @@ View.prototype.uncopyPublicIdea = function(basket, ideaId) {
 		var ideaBasketParams = {
 			action:"uncopyPublicIdea",
 			ideaId:publisherIdeaId,
-			workgroupId:publisherWorkgroupId
+			ideaWorkgroupId:publisherWorkgroupId
 		};
 
 		//make the request to uncopy the idea

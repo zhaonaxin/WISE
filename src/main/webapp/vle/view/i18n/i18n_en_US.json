@@ -356,8 +356,16 @@
 		"description":"The default text for the Idea Basket in the Idea Manager tool"
 	},	
 	"idea_basket_add_an_idea":{
-		"value":"Add Idea",
+		"value":"Add Idea +",
 		"description":"The default text for button to add a new idea in the Idea Manager tool"
+	},	
+	"idea_basket_private":{
+		"value":"Private Idea Basket",
+		"description":"The text for the private idea basket"
+	},	
+	"idea_basket_public":{
+		"value":"Public Idea Basket",
+		"description":"The text for the public idea basket"
 	},
 	"idea_basket_retrieval_error":{
 		"value":"Error: Could not open Idea Basket, refresh the project to try again",
@@ -672,7 +680,7 @@
 		"description":"GradingTool: grade by step scored items only table column"
 	},				
 	"grading_grade_by_step_percent_completed_step":{
-		"value":"% Visited Step",
+		"value":"% Completed Step",
 		"description":"GradingTool: grade by step % of Students Who Have Completed This Step table column"
 	},
 	"grading_grade_by_step_all_periods":{
